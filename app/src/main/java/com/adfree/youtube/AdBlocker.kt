@@ -3,44 +3,42 @@ package com.adfree.youtube
 import android.content.Context
 import android.net.Uri
 import android.webkit.WebResourceResponse
-import java.io.BufferedReader
 import java.io.ByteArrayInputStream
-import java.io.InputStreamReader
-import java.util.Collections
 import java.util.HashSet
 
 object AdBlocker {
-    private val adHosts: MutableSet<String> = Collections.synchronizedSet(HashSet())
+    @Volatile
+    private var adHosts: Set<String> = emptySet()
+    
+    @Volatile
     private var cachedScript: String? = null
 
     fun init(context: Context) {
         if (adHosts.isNotEmpty()) return
 
-        Thread {
-            try {
-                val inputStream = context.assets.open("ad_hosts.txt")
-                val reader = BufferedReader(InputStreamReader(inputStream))
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    val trimmed = line?.trim()
-                    if (!trimmed.isNullOrEmpty() && !trimmed.startsWith("#")) {
-                        adHosts.add(trimmed.lowercase())
+        try {
+            val set = HashSet<String>()
+            context.assets.open("ad_hosts.txt").bufferedReader().useLines { lines ->
+                lines.forEach { line ->
+                    val trimmed = line.trim()
+                    if (trimmed.isNotEmpty() && !trimmed.startsWith("#")) {
+                        set.add(trimmed.lowercase())
                     }
                 }
-                reader.close()
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
-        }.start()
+            adHosts = set
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun isAdHost(url: String?): Boolean {
         if (url.isNullOrEmpty()) return false
         val uri = try { Uri.parse(url) } catch (e: Exception) { return false }
         val host = uri.host?.lowercase() ?: return false
+        val hosts = adHosts
 
-        // Check exact match or subdomain match
-        for (adHost in adHosts) {
+        for (adHost in hosts) {
             if (host == adHost || host.endsWith(".$adHost") || url.contains(adHost)) {
                 return true
             }

@@ -32,6 +32,9 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private var isPlayingVideo: Boolean = false
 
+    @Volatile
+    private var currentMainUrl: String = ""
+
     // Standard Chrome Mobile User-Agent matching genuine Chrome on Android
     private val customUserAgent =
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
@@ -44,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize ad block list
+        // Initialize ad block list safely before any requests start
         AdBlocker.init(applicationContext)
 
         setupWebView()
@@ -53,6 +56,7 @@ class MainActivity : AppCompatActivity() {
 
         // Handle intent if opened via deep link or standard launch
         val targetUrl = intent?.data?.toString() ?: youtubeHomeUrl
+        currentMainUrl = targetUrl
         if (savedInstanceState == null) {
             binding.webView.loadUrl(targetUrl)
         } else {
@@ -81,8 +85,12 @@ class MainActivity : AppCompatActivity() {
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
         // Disable X-Requested-With header to stop Google from blocking WebView login
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
-            WebSettingsCompat.setRequestedWithHeaderOriginAllowList(settings, emptySet())
+        try {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
+                WebSettingsCompat.setRequestedWithHeaderOriginAllowList(settings, emptySet())
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
 
         // Crucial for autoplay and background audio playback
@@ -101,51 +109,61 @@ class MainActivity : AppCompatActivity() {
                 view: WebView?,
                 request: WebResourceRequest?
             ): WebResourceResponse? {
-                val url = request?.url?.toString() ?: return null
-                val currentUrl = view?.url ?: ""
+                try {
+                    val url = request?.url?.toString() ?: return null
+                    val mainUrl = currentMainUrl
 
-                // During Google Authentication, do NOT block any requests
-                if (currentUrl.contains("accounts.google") ||
-                    currentUrl.contains("google.com/accounts") ||
-                    currentUrl.contains("consent.google") ||
-                    currentUrl.contains("/signin/")
-                ) {
-                    return super.shouldInterceptRequest(view, request)
-                }
+                    // During Google Authentication, do NOT block any requests
+                    if (mainUrl.contains("accounts.google") ||
+                        mainUrl.contains("google.com/accounts") ||
+                        mainUrl.contains("consent.google") ||
+                        mainUrl.contains("/signin/")
+                    ) {
+                        return super.shouldInterceptRequest(view, request)
+                    }
 
-                val host = request.url?.host?.lowercase() ?: ""
-                // Never intercept or block Google Authentication or security verification endpoints
-                if (host.contains("accounts.google") ||
-                    host.contains("myaccount.google") ||
-                    host.contains("consent.google") ||
-                    host.contains("googleapis.com") ||
-                    host.contains("gstatic.com") ||
-                    host.contains("googleusercontent.com") ||
-                    url.contains("/signin/") ||
-                    url.contains("/ServiceLogin") ||
-                    url.contains("/CheckCookie")
-                ) {
-                    return super.shouldInterceptRequest(view, request)
-                }
+                    val host = request.url?.host?.lowercase() ?: ""
+                    // Never intercept or block Google Authentication or security verification endpoints
+                    if (host.contains("accounts.google") ||
+                        host.contains("myaccount.google") ||
+                        host.contains("consent.google") ||
+                        host.contains("googleapis.com") ||
+                        host.contains("gstatic.com") ||
+                        host.contains("googleusercontent.com") ||
+                        url.contains("/signin/") ||
+                        url.contains("/ServiceLogin") ||
+                        url.contains("/CheckCookie")
+                    ) {
+                        return super.shouldInterceptRequest(view, request)
+                    }
 
-                if (AdBlocker.isAdHost(url)) {
-                    return AdBlocker.createEmptyResource()
+                    if (AdBlocker.isAdHost(url)) {
+                        return AdBlocker.createEmptyResource()
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
                 }
                 return super.shouldInterceptRequest(view, request)
             }
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                currentMainUrl = url ?: ""
                 binding.progressBar.visibility = View.VISIBLE
                 injectAdBlocker()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
+                currentMainUrl = url ?: ""
                 binding.progressBar.visibility = View.GONE
                 binding.swipeRefreshLayout.isRefreshing = false
                 // Persist session cookies to disk
-                CookieManager.getInstance().flush()
+                try {
+                    CookieManager.getInstance().flush()
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
                 injectAdBlocker()
             }
 
@@ -166,7 +184,7 @@ class MainActivity : AppCompatActivity() {
                             startActivity(intent)
                             return true
                         }
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
                         e.printStackTrace()
                     }
                     return true
@@ -190,7 +208,7 @@ class MainActivity : AppCompatActivity() {
                     try {
                         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                         startActivity(browserIntent)
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
                         e.printStackTrace()
                     }
                     true
@@ -245,7 +263,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectAdBlocker() {
-        val currentUrl = binding.webView.url ?: ""
+        val currentUrl = currentMainUrl
         // ONLY inject ad blocker scripts on YouTube domain!
         // NEVER inject into Google login / account verification pages!
         val isYouTube = currentUrl.contains("youtube.com") || currentUrl.contains("youtu.be")
@@ -296,7 +314,7 @@ class MainActivity : AppCompatActivity() {
                     .setAspectRatio(aspectRatio)
                     .build()
                 enterPictureInPictureMode(params)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
             }
         }
@@ -326,7 +344,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        CookieManager.getInstance().flush()
+        try {
+            CookieManager.getInstance().flush()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
