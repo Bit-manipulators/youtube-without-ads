@@ -9,7 +9,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Message
 import android.util.Rational
 import android.view.View
 import android.view.ViewGroup
@@ -33,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private var isPlayingVideo: Boolean = false
 
-    // Standard reduced Chrome Mobile User-Agent matching genuine Chrome on Android
+    // Standard Chrome Mobile User-Agent matching genuine Chrome on Android
     private val customUserAgent =
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
@@ -74,9 +73,12 @@ class MainActivity : AppCompatActivity() {
         settings.loadWithOverviewMode = true
         settings.userAgentString = customUserAgent
 
-        // Support popups & OAuth redirection windows
+        // Keep all navigations inside single window to prevent about:blank white screen
         settings.javaScriptCanOpenWindowsAutomatically = true
-        settings.setSupportMultipleWindows(true)
+        settings.setSupportMultipleWindows(false)
+
+        // Allow mixed content redirects (essential for Google SetSID cookies)
+        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
         // Disable X-Requested-With header to stop Google from blocking WebView login
         if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
@@ -100,12 +102,25 @@ class MainActivity : AppCompatActivity() {
                 request: WebResourceRequest?
             ): WebResourceResponse? {
                 val url = request?.url?.toString() ?: return null
-                val host = request.url?.host?.lowercase() ?: ""
+                val currentUrl = view?.url ?: ""
 
+                // During Google Authentication, do NOT block any requests
+                if (currentUrl.contains("accounts.google") ||
+                    currentUrl.contains("google.com/accounts") ||
+                    currentUrl.contains("consent.google") ||
+                    currentUrl.contains("/signin/")
+                ) {
+                    return super.shouldInterceptRequest(view, request)
+                }
+
+                val host = request.url?.host?.lowercase() ?: ""
                 // Never intercept or block Google Authentication or security verification endpoints
                 if (host.contains("accounts.google") ||
                     host.contains("myaccount.google") ||
                     host.contains("consent.google") ||
+                    host.contains("googleapis.com") ||
+                    host.contains("gstatic.com") ||
+                    host.contains("googleusercontent.com") ||
                     url.contains("/signin/") ||
                     url.contains("/ServiceLogin") ||
                     url.contains("/CheckCookie")
@@ -138,8 +153,24 @@ class MainActivity : AppCompatActivity() {
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean {
-                val url = request?.url?.toString() ?: return false
-                val host = request.url?.host?.lowercase() ?: ""
+                val uri = request?.url ?: return false
+                val url = uri.toString()
+                val host = uri.host?.lowercase() ?: ""
+                val scheme = uri.scheme?.lowercase() ?: ""
+
+                // Handle non-HTTP schemes (e.g. intent:// or android-app://) safely
+                if (scheme != "http" && scheme != "https") {
+                    try {
+                        val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+                        if (intent != null && intent.resolveActivity(packageManager) != null) {
+                            startActivity(intent)
+                            return true
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    return true
+                }
 
                 // Allow all Google authentication, consent, security, and YouTube domains to stay in-app
                 val isInternalAuthOrMedia = host.endsWith("youtube.com") ||
@@ -173,19 +204,6 @@ class MainActivity : AppCompatActivity() {
                 if (newProgress >= 100) {
                     binding.progressBar.visibility = View.GONE
                 }
-            }
-
-            // Route OAuth / popups into the main WebView so sign-in completes seamlessly
-            override fun onCreateWindow(
-                view: WebView?,
-                isDialog: Boolean,
-                isUserGesture: Boolean,
-                resultMsg: Message?
-            ): Boolean {
-                val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
-                transport.webView = view
-                resultMsg.sendToTarget()
-                return true
             }
 
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
@@ -227,6 +245,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectAdBlocker() {
+        val currentUrl = binding.webView.url ?: ""
+        // ONLY inject ad blocker scripts on YouTube domain!
+        // NEVER inject into Google login / account verification pages!
+        val isYouTube = currentUrl.contains("youtube.com") || currentUrl.contains("youtu.be")
+        val isGoogleAuth = currentUrl.contains("accounts.google") ||
+                currentUrl.contains("google.com/accounts") ||
+                currentUrl.contains("consent.google") ||
+                currentUrl.contains("/signin/")
+
+        if (!isYouTube || isGoogleAuth) {
+            return
+        }
+
         val script = AdBlocker.getAdBlockScript(applicationContext)
         if (script.isNotEmpty()) {
             binding.webView.evaluateJavascript(script, null)
