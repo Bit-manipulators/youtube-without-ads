@@ -1,0 +1,21 @@
+# Ad and Tracker hosts for YouTube
+googleads.g.doubleclick.net
+pagead2.googlesyndication.com
+adservice.google.com
+ad.doubleclick.net
+securepubads.g.doubleclick.net
+pubads.g.doubleclick.net
+s.youtube.com
+youtube.com/api/stats/ads
+youtube.com/pagead/
+youtube.com/ptracking
+stats.g.doubleclick.net
+www.google-analytics.com
+adclick.g.doubleclick.net
+static.doubleclick.net
+ade.googlesyndication.com
+tpc.googlesyndication.com
+cm.g.doubleclick.net
+m.doubleclick.net
+fls-na.amazon.com
+ads.youtube.com
