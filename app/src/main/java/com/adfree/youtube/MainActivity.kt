@@ -222,6 +222,9 @@ class MainActivity : AppCompatActivity() {
                 if (newProgress >= 100) {
                     binding.progressBar.visibility = View.GONE
                 }
+                if (newProgress > 25) {
+                    injectAdBlocker()
+                }
             }
 
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {

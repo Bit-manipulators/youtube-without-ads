@@ -1,16 +1,99 @@
 /**
- * YouTube Ad Blocker & Enhancer Script
- * Handles CSS ad hiding, video ad auto-skip/speedup, anti-adblock bypass, and background playback.
+ * Comprehensive YouTube Ad Blocker & Enhancer Script for Mobile & Desktop Web
+ * - Intercepts JSON player responses to strip ad placements at the root
+ * - Hides all mobile & desktop ad banners, promo cards, and sparkles
+ * - Auto-fast-forwards and skips video ads instantly
+ * - Preserves background playback
  */
 (function() {
     'use strict';
 
-    if (window.__yt_adblock_injected) return;
-    window.__yt_adblock_injected = true;
+    if (window.__yt_adblock_installed) return;
+    window.__yt_adblock_installed = true;
 
-    // 1. Inject CSS to hide static ads, banners, promos, and popup overlays
+    // =========================================================================
+    // 1. ROOT INTERCEPTION: Strip player ads from YouTube Player JSON Responses
+    // =========================================================================
+    function cleanAdData(obj) {
+        if (!obj || typeof obj !== 'object') return obj;
+        if (obj.playerAds) delete obj.playerAds;
+        if (obj.adPlacements) delete obj.adPlacements;
+        if (obj.adSlots) delete obj.adSlots;
+        if (obj.adBreakHeartbeatParams) delete obj.adBreakHeartbeatParams;
+        return obj;
+    }
+
+    // Intercept window.ytInitialPlayerResponse
+    let _ytInitialPlayerResponse = window.ytInitialPlayerResponse;
+    try {
+        Object.defineProperty(window, 'ytInitialPlayerResponse', {
+            get: function() { return _ytInitialPlayerResponse; },
+            set: function(val) {
+                _ytInitialPlayerResponse = cleanAdData(val);
+            },
+            configurable: true
+        });
+        if (_ytInitialPlayerResponse) {
+            cleanAdData(_ytInitialPlayerResponse);
+        }
+    } catch (e) {}
+
+    // Intercept JSON.parse
+    const originalJSONParse = JSON.parse;
+    JSON.parse = function() {
+        const result = originalJSONParse.apply(this, arguments);
+        if (result && typeof result === 'object') {
+            cleanAdData(result);
+        }
+        return result;
+    };
+
+    // Intercept window.fetch for /youtubei/v1/player endpoints
+    if (window.fetch) {
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            const response = await originalFetch.apply(this, args);
+            try {
+                const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+                if (url.includes('/youtubei/v1/player')) {
+                    const clone = response.clone();
+                    const text = await clone.text();
+                    try {
+                        const data = JSON.parse(text);
+                        cleanAdData(data);
+                        return new Response(JSON.stringify(data), {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: response.headers
+                        });
+                    } catch (err) {
+                        return response;
+                    }
+                }
+            } catch (err) {}
+            return response;
+        };
+    }
+
+    // =========================================================================
+    // 2. CSS STYLES: Completely hide banner ads, sponsored cards, and overlays
+    // =========================================================================
     const adStyles = `
-        /* Banner & Feed Ads */
+        /* Mobile Web YouTube (m.youtube.com) */
+        ytm-promoted-sparkles-web-renderer,
+        ytm-ad-slot-renderer,
+        ytm-companion-ad-renderer,
+        ytm-promoted-sparkles-text-search-renderer,
+        ytm-promoted-video-renderer,
+        ytm-compact-promoted-item-renderer,
+        ytm-feed-ad-metadata-renderer,
+        ytm-inline-ad-renderer,
+        ytm-statement-banner-renderer,
+        ytm-search-ad-renderer,
+        ytm-masthead,
+        .ytm-ad-badge,
+        div[ad-slot],
+        /* Desktop & Video Player elements */
         ytd-ad-slot-renderer,
         ytd-banner-promo-renderer,
         ytd-in-feed-ad-layout-renderer,
@@ -24,11 +107,8 @@
         .ytp-ad-progress-list,
         .ytp-ad-player-overlay,
         .ytp-ad-player-overlay-layout,
-        /* Mobile specific selectors */
-        ytm-promoted-sparkles-web-renderer,
-        ytm-ad-slot-renderer,
-        ytm-companion-ad-renderer,
-        ytm-promoted-sparkles-text-search-renderer,
+        .ytp-ad-image-overlay,
+        .ytp-ad-module,
         /* Anti-adblock dialogs */
         ytd-enforcement-message-view-model,
         tp-yt-paper-dialog[modern-dialog-layout],
@@ -51,7 +131,9 @@
     }
     injectCSS();
 
-    // 2. Prevent YouTube from pausing playback when minimized (Background Audio)
+    // =========================================================================
+    // 3. BACKGROUND AUDIO PLAYBACK: Spoof visibilityState on YouTube
+    // =========================================================================
     try {
         Object.defineProperty(document, 'hidden', {
             get: function() { return false; },
@@ -64,77 +146,117 @@
         document.addEventListener('visibilitychange', function(e) {
             e.stopImmediatePropagation();
         }, true);
-    } catch (e) {
-        console.error("Background play override error:", e);
+    } catch (e) {}
+
+    // =========================================================================
+    // 4. VIDEO AD AUTO-SKIP & INSTANT FAST-FORWARD
+    // =========================================================================
+    const skipSelectors = [
+        '.ytp-ad-skip-button',
+        '.ytp-ad-skip-button-modern',
+        '.ytp-skip-ad-button',
+        '.videoAdUiSkipButton',
+        '.ytp-ad-skip-button-slot button',
+        'button.ytp-ad-skip-button-modern',
+        '.ytm-skip-ad-button',
+        '.ytp-ad-skip-button-container button',
+        'button[class*="skip-button"]',
+        'button[class*="ytp-ad-skip"]',
+        '.ytp-ad-overlay-close-button',
+        '[aria-label*="Skip ad" i]',
+        '[aria-label*="Skip ads" i]',
+        'button.ytp-ad-skip-button-text'
+    ];
+
+    function isAdShowing() {
+        const moviePlayer = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
+        if (moviePlayer && moviePlayer.classList) {
+            if (moviePlayer.classList.contains('ad-showing') ||
+                moviePlayer.classList.contains('ad-interrupting')) {
+                return true;
+            }
+        }
+
+        const adElement = document.querySelector(
+            '.ad-showing, .ad-interrupting, .video-ads, .ytp-ad-player-overlay, ' +
+            '.ytp-ad-preview-container, .ytp-ad-text, ytm-ad-slot-renderer, ' +
+            '[class*="ad-showing"], [class*="ad-interrupting"]'
+        );
+        return !!adElement;
     }
 
-    // 3. Skip / Fast-forward Video Ads
     function handleVideoAds() {
-        // Detect mobile and desktop video player
-        const moviePlayer = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
-        const video = document.querySelector('video');
+        injectCSS();
 
-        if (moviePlayer && moviePlayer.classList) {
-            const isAdShowing = moviePlayer.classList.contains('ad-showing') ||
-                                moviePlayer.classList.contains('ad-interrupting');
+        const adActive = isAdShowing();
+        const videos = document.querySelectorAll('video');
 
-            if (isAdShowing && video) {
-                // Mute and fast forward to the end of the ad instantly
+        if (adActive) {
+            videos.forEach(function(video) {
                 video.muted = true;
                 video.playbackRate = 16.0;
                 if (!isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
                     video.currentTime = video.duration;
                 }
-            }
+            });
         }
 
-        // Click any visible skip ad buttons immediately
-        const skipSelectors = [
-            '.ytp-ad-skip-button',
-            '.ytp-ad-skip-button-modern',
-            '.ytp-skip-ad-button',
-            '.videoAdUiSkipButton',
-            '.ytp-ad-skip-button-slot button',
-            'button.ytp-ad-skip-button-modern'
-        ];
-
+        // Click any visible skip button immediately
         for (const selector of skipSelectors) {
-            const skipButton = document.querySelector(selector);
-            if (skipButton && typeof skipButton.click === 'function') {
-                skipButton.click();
-                break;
-            }
+            const buttons = document.querySelectorAll(selector);
+            buttons.forEach(function(btn) {
+                if (btn && typeof btn.click === 'function') {
+                    btn.click();
+                }
+            });
         }
 
-        // Dismiss Anti-Adblock warning modal if present
+        // Dismiss anti-adblock modal if any
         const antiAdblockModal = document.querySelector('ytd-enforcement-message-view-model');
         if (antiAdblockModal) {
             const dialog = antiAdblockModal.closest('tp-yt-paper-dialog');
             if (dialog) dialog.remove();
             antiAdblockModal.remove();
 
-            // Resume video if it was paused by YouTube modal
-            if (video && video.paused) {
-                video.play();
-            }
+            videos.forEach(function(v) {
+                if (v && v.paused) v.play();
+            });
         }
     }
 
-    // Run periodically to catch ad state changes seamlessly
-    setInterval(function() {
-        injectCSS();
-        handleVideoAds();
-    }, 250);
+    // Hook HTMLMediaElement.prototype.play to attach per-video listeners
+    try {
+        const originalPlay = HTMLMediaElement.prototype.play;
+        HTMLMediaElement.prototype.play = function() {
+            if (!this.__adblock_hooked) {
+                this.__adblock_hooked = true;
+                this.addEventListener('timeupdate', function() {
+                    if (isAdShowing()) {
+                        this.muted = true;
+                        this.playbackRate = 16.0;
+                        if (!isNaN(this.duration) && isFinite(this.duration) && this.duration > 0) {
+                            this.currentTime = this.duration;
+                        }
+                        for (const selector of skipSelectors) {
+                            const btn = document.querySelector(selector);
+                            if (btn && typeof btn.click === 'function') btn.click();
+                        }
+                    }
+                });
+            }
+            return originalPlay.apply(this, arguments);
+        };
+    } catch (e) {}
 
-    // Also observe DOM changes
-    const observer = new MutationObserver(function() {
-        handleVideoAds();
-    });
+    // Run periodically every 150ms
+    setInterval(handleVideoAds, 150);
 
+    // Observe DOM mutations
+    const observer = new MutationObserver(handleVideoAds);
     observer.observe(document.body || document.documentElement, {
         childList: true,
         subtree: true
     });
 
-    console.log("YouTube AdBlocker initialized successfully.");
+    console.log("YouTube AdBlocker active.");
 })();
