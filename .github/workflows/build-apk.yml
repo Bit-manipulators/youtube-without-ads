@@ -37,23 +37,29 @@ jobs:
 
     - name: Prepare Release Asset
       run: |
+        TAG="${{ github.ref_name }}"
+        if [[ "$TAG" == "main" || -z "$TAG" ]]; then
+          TAG="v0.2"
+        fi
         mkdir -p release-output
-        cp app/build/outputs/apk/debug/app-debug.apk release-output/AdsFreeYT_v0.1.apk
+        cp app/build/outputs/apk/debug/app-debug.apk "release-output/AdsFreeYT_${TAG}.apk"
+        echo "RELEASE_FILE=release-output/AdsFreeYT_${TAG}.apk" >> $GITHUB_ENV
+        echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
         ls -la release-output/
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AdsFreeYT_v0.1.apk
-        path: release-output/AdsFreeYT_v0.1.apk
+        name: AdsFreeYT-apk
+        path: release-output/*.apk
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
       uses: softprops/action-gh-release@v2
       with:
-        name: "AdsFreeYT v0.1"
+        name: "AdsFreeYT ${{ github.ref_name }}"
         tag_name: ${{ github.ref_name }}
         draft: false
         prerelease: false
         generate_release_notes: true
-        files: release-output/AdsFreeYT_v0.1.apk
+        files: release-output/*.apk

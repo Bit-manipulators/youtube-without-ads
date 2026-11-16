@@ -11,8 +11,8 @@ android {
         applicationId = "com.adfree.youtube"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -44,4 +44,5 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.webkit)
 }

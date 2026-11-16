@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Message
 import android.util.Rational
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +22,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import com.adfree.youtube.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -30,9 +33,9 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private var isPlayingVideo: Boolean = false
 
-    // Spoofed Chrome Mobile User-Agent to bypass Google login restrictions
+    // Standard reduced Chrome Mobile User-Agent matching genuine Chrome on Android
     private val customUserAgent =
-        "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UD1A.230803.041) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.113 Mobile Safari/537.36"
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
     private val youtubeHomeUrl = "https://m.youtube.com"
 
@@ -71,6 +74,15 @@ class MainActivity : AppCompatActivity() {
         settings.loadWithOverviewMode = true
         settings.userAgentString = customUserAgent
 
+        // Support popups & OAuth redirection windows
+        settings.javaScriptCanOpenWindowsAutomatically = true
+        settings.setSupportMultipleWindows(true)
+
+        // Disable X-Requested-With header to stop Google from blocking WebView login
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
+            WebSettingsCompat.setRequestedWithHeaderOriginAllowList(settings, emptySet())
+        }
+
         // Crucial for autoplay and background audio playback
         settings.mediaPlaybackRequiresUserGesture = false
 
@@ -87,7 +99,20 @@ class MainActivity : AppCompatActivity() {
                 view: WebView?,
                 request: WebResourceRequest?
             ): WebResourceResponse? {
-                val url = request?.url?.toString()
+                val url = request?.url?.toString() ?: return null
+                val host = request.url?.host?.lowercase() ?: ""
+
+                // Never intercept or block Google Authentication or security verification endpoints
+                if (host.contains("accounts.google") ||
+                    host.contains("myaccount.google") ||
+                    host.contains("consent.google") ||
+                    url.contains("/signin/") ||
+                    url.contains("/ServiceLogin") ||
+                    url.contains("/CheckCookie")
+                ) {
+                    return super.shouldInterceptRequest(view, request)
+                }
+
                 if (AdBlocker.isAdHost(url)) {
                     return AdBlocker.createEmptyResource()
                 }
@@ -104,6 +129,8 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 binding.progressBar.visibility = View.GONE
                 binding.swipeRefreshLayout.isRefreshing = false
+                // Persist session cookies to disk
+                CookieManager.getInstance().flush()
                 injectAdBlocker()
             }
 
@@ -112,16 +139,23 @@ class MainActivity : AppCompatActivity() {
                 request: WebResourceRequest?
             ): Boolean {
                 val url = request?.url?.toString() ?: return false
+                val host = request.url?.host?.lowercase() ?: ""
 
-                // Keep YouTube and Google Login inside our app
-                return if (url.contains("youtube.com") ||
-                    url.contains("youtu.be") ||
-                    url.contains("accounts.google.com") ||
-                    url.contains("google.com/accounts")
-                ) {
+                // Allow all Google authentication, consent, security, and YouTube domains to stay in-app
+                val isInternalAuthOrMedia = host.endsWith("youtube.com") ||
+                        host == "youtu.be" ||
+                        host.endsWith("ytimg.com") ||
+                        host.endsWith("google.com") ||
+                        host.contains(".google.") ||
+                        host.endsWith("gstatic.com") ||
+                        host.endsWith("googleusercontent.com") ||
+                        host.endsWith("g.co") ||
+                        host.endsWith("googleapis.com")
+
+                return if (isInternalAuthOrMedia) {
                     false
                 } else {
-                    // Open external web links in device browser
+                    // Open external third-party web links in device browser
                     try {
                         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                         startActivity(browserIntent)
@@ -139,6 +173,19 @@ class MainActivity : AppCompatActivity() {
                 if (newProgress >= 100) {
                     binding.progressBar.visibility = View.GONE
                 }
+            }
+
+            // Route OAuth / popups into the main WebView so sign-in completes seamlessly
+            override fun onCreateWindow(
+                view: WebView?,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: Message?
+            ): Boolean {
+                val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
+                transport.webView = view
+                resultMsg.sendToTarget()
+                return true
             }
 
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
@@ -244,6 +291,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun showSystemUI() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CookieManager.getInstance().flush()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
