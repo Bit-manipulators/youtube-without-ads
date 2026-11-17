@@ -14,14 +14,10 @@ import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.adfree.youtube.databinding.ActivityMainBinding
-import org.mozilla.geckoview.AllowOrDeny
-import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
-import org.mozilla.geckoview.WebExtension
-import org.mozilla.geckoview.WebExtensionController
 
 class MainActivity : AppCompatActivity() {
 
@@ -57,8 +53,9 @@ class MainActivity : AppCompatActivity() {
             loadInitialPage(targetUrl)
         }
         // Safety timeout so user is never stuck waiting if extension verification is delayed
-        handler.postDelayed(timeoutRunnable, 2500)
+        handler.postDelayed(timeoutRunnable, 2000)
 
+        // Ensure built-in uBlock Origin is registered and ready before navigating
         runtime?.webExtensionController?.ensureBuiltIn(extensionUri, extensionId)
             ?.accept(
                 { extension ->
@@ -101,39 +98,6 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         runtime = GeckoRuntime.create(this, runtimeSettings)
-
-        // Set prompt delegate to auto-grant all extension permissions
-        runtime?.webExtensionController?.promptDelegate = object : WebExtensionController.PromptDelegate {
-            override fun onInstallPromptRequest(
-                extension: WebExtension,
-                permissions: Array<out String>,
-                origins: Array<out String>
-            ): GeckoResult<WebExtension.PermissionPromptResponse>? {
-                Log.i("AdFreeYT", "PromptDelegate: auto-allowing extension ${extension.id}")
-                return GeckoResult.fromValue(
-                    WebExtension.PermissionPromptResponse(
-                        true, // isPermissionsGranted
-                        true  // isPrivateModeGranted
-                    )
-                )
-            }
-
-            override fun onOptionalPrompt(
-                extension: WebExtension,
-                permissions: Array<out String>,
-                origins: Array<out String>
-            ): GeckoResult<AllowOrDeny>? {
-                return GeckoResult.fromValue(AllowOrDeny.ALLOW)
-            }
-
-            override fun onUpdatePrompt(
-                extension: WebExtension,
-                newPermissions: Array<out String>,
-                newOrigins: Array<out String>
-            ): GeckoResult<AllowOrDeny>? {
-                return GeckoResult.fromValue(AllowOrDeny.ALLOW)
-            }
-        }
 
         val sessionSettings = GeckoSessionSettings.Builder()
             .useTrackingProtection(true)
