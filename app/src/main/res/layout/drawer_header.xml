@@ -105,6 +105,7 @@
                 android:layout_height="24dp"
                 android:layout_marginStart="4dp"
                 android:src="@drawable/ic_arrow_drop_down"
+                android:visibility="gone"
                 app:tint="@color/drawer_header_font_color"
                 tools:ignore="ContentDescription" />
         </LinearLayout>
@@ -114,6 +115,9 @@
         android:id="@+id/drawer_header_action_button"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:visibility="gone"
+        android:clickable="false"
+        android:focusable="false"
         android:background="?selectableItemBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

@@ -64,7 +64,6 @@ object ServiceHelper {
     fun getImportInstructions(serviceId: Int): Int {
         return when (serviceId) {
             0 -> R.string.import_youtube_instructions
-            1 -> R.string.import_soundcloud_instructions
             else -> -1
         }
     }
@@ -79,26 +78,17 @@ object ServiceHelper {
     @JvmStatic
     @StringRes
     fun getImportInstructionsHint(serviceId: Int): Int {
-        return when (serviceId) {
-            1 -> R.string.import_soundcloud_instructions_hint
-            else -> -1
-        }
+        return -1
     }
 
     @JvmStatic
     fun getSelectedServiceId(context: Context): Int {
-        return (getSelectedService(context) ?: DEFAULT_FALLBACK_SERVICE).serviceId
+        return ServiceList.YouTube.serviceId
     }
 
     @JvmStatic
-    fun getSelectedService(context: Context): StreamingService? {
-        val serviceName: String = PreferenceManager.getDefaultSharedPreferences(context)
-            .getStringSafe(
-                context.getString(R.string.current_service_key),
-                context.getString(R.string.default_service_value)
-            )
-
-        return runCatching { NewPipe.getService(serviceName) }.getOrNull()
+    fun getSelectedService(context: Context): StreamingService {
+        return ServiceList.YouTube
     }
 
     @JvmStatic
@@ -123,10 +113,7 @@ object ServiceHelper {
 
     @JvmStatic
     fun setSelectedServiceId(context: Context, serviceId: Int) {
-        val serviceName = runCatching { NewPipe.getService(serviceId).serviceInfo.name }
-            .getOrDefault(DEFAULT_FALLBACK_SERVICE.serviceInfo.name)
-
-        setSelectedServicePreferences(context, serviceName)
+        setSelectedServicePreferences(context, ServiceList.YouTube.serviceInfo.name)
     }
 
     private fun setSelectedServicePreferences(context: Context, serviceName: String?) {
@@ -163,6 +150,6 @@ object ServiceHelper {
 
     @JvmStatic
     fun initServices(context: Context) {
-        ServiceList.all().forEach { initService(context, it.serviceId) }
+        initService(context, ServiceList.YouTube.serviceId)
     }
 }

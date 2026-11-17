@@ -67,6 +67,7 @@ import org.schabi.newpipe.databinding.InstanceSpinnerLayoutBinding;
 import org.schabi.newpipe.databinding.ToolbarLayoutBinding;
 import org.schabi.newpipe.error.ErrorUtil;
 import org.schabi.newpipe.extractor.NewPipe;
+import org.schabi.newpipe.extractor.ServiceList;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
@@ -399,7 +400,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupDrawerHeader() {
-        drawerHeaderBinding.drawerHeaderActionButton.setOnClickListener(view -> toggleServices());
+        drawerHeaderBinding.drawerArrow.setVisibility(View.GONE);
+        drawerHeaderBinding.drawerHeaderActionButton.setClickable(false);
+        drawerHeaderBinding.drawerHeaderActionButton.setFocusable(false);
+        drawerHeaderBinding.drawerHeaderActionButton.setOnClickListener(null);
 
         // If the current app name is bigger than the default "NewPipe" (7 chars),
         // let the text view grow a little more as well.
@@ -417,41 +421,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void toggleServices() {
-        servicesShown = !servicesShown;
-
-        drawerLayoutBinding.navigation.getMenu().removeGroup(R.id.menu_services_group);
-        drawerLayoutBinding.navigation.getMenu().removeGroup(R.id.menu_tabs_group);
-        drawerLayoutBinding.navigation.getMenu().removeGroup(R.id.menu_kiosks_group);
-        drawerLayoutBinding.navigation.getMenu().removeGroup(R.id.menu_options_about_group);
-
-        // Show up or down arrow
-        drawerHeaderBinding.drawerArrow.setImageResource(
-                servicesShown ? R.drawable.ic_arrow_drop_up : R.drawable.ic_arrow_drop_down);
-
-        if (servicesShown) {
-            showServices();
-        } else {
-            try {
-                addDrawerMenuForCurrentService();
-            } catch (final Exception e) {
-                ErrorUtil.showUiErrorSnackbar(this, "Showing main page tabs", e);
-            }
-        }
+        // Disabled: only YouTube is supported
     }
 
     private void showServices() {
-        for (final StreamingService s : NewPipe.getServices()) {
-            final String title = s.getServiceInfo().getName();
+        final StreamingService s = ServiceList.YouTube;
+        final String title = s.getServiceInfo().getName();
 
-            final MenuItem menuItem = drawerLayoutBinding.navigation.getMenu()
-                    .add(R.id.menu_services_group, s.getServiceId(), ORDER, title)
-                    .setIcon(ServiceHelper.getIcon(s.getServiceId()));
+        drawerLayoutBinding.navigation.getMenu()
+                .add(R.id.menu_services_group, s.getServiceId(), ORDER, title)
+                .setIcon(ServiceHelper.getIcon(s.getServiceId()));
 
-            // peertube specifics
-            if (s.getServiceId() == 3) {
-                enhancePeertubeMenu(menuItem);
-            }
-        }
         drawerLayoutBinding.navigation.getMenu()
                 .getItem(ServiceHelper.getSelectedServiceId(this))
                 .setChecked(true);

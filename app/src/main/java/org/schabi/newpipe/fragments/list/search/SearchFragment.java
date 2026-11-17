@@ -61,6 +61,7 @@ import org.schabi.newpipe.extractor.ListExtractor;
 import org.schabi.newpipe.extractor.MetaInfo;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.Page;
+import org.schabi.newpipe.extractor.ServiceList;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
@@ -862,17 +863,19 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         // and open it if possible.
         try {
             final StreamingService streamingService = NewPipe.getServiceByUrl(theSearchString);
-            showLoading();
-            disposables.add(Observable
-                    .fromCallable(() -> NavigationHelper.getIntentByLink(activity,
-                            streamingService, theSearchString))
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(intent -> {
-                        getFM().popBackStackImmediate();
-                        activity.startActivity(intent);
-                    }, throwable -> showTextError(getString(R.string.unsupported_url))));
-            return;
+            if (streamingService.getServiceId() == ServiceList.YouTube.getServiceId()) {
+                showLoading();
+                disposables.add(Observable
+                        .fromCallable(() -> NavigationHelper.getIntentByLink(activity,
+                                streamingService, theSearchString))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(intent -> {
+                            getFM().popBackStackImmediate();
+                            activity.startActivity(intent);
+                        }, throwable -> showTextError(getString(R.string.unsupported_url))));
+                return;
+            }
         } catch (final Exception ignored) {
             // Exception occurred, it's not a url
         }
