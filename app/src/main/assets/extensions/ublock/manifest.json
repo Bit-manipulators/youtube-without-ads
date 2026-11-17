@@ -69,6 +69,16 @@
       "run_at": "document_start"
     },
     {
+      "all_frames": true,
+      "js": [
+        "/js/youtube-enhancer.js"
+      ],
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "run_at": "document_start"
+    },
+    {
       "all_frames": false,
       "js": [
         "/js/scriptlets/subscriber.js"

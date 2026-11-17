@@ -1,20 +1,27 @@
 package com.adfree.youtube
 
 import android.app.PictureInPictureParams
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.util.Rational
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.adfree.youtube.databinding.ActivityMainBinding
+import org.mozilla.geckoview.AllowOrDeny
+import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.WebExtension
+import org.mozilla.geckoview.WebExtensionController
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,8 +30,11 @@ class MainActivity : AppCompatActivity() {
     private var runtime: GeckoRuntime? = null
     private var isFullScreen: Boolean = false
     private var canGoBack: Boolean = false
+    private var pageLoaded: Boolean = false
 
     private val youtubeHomeUrl = "https://m.youtube.com"
+    private val extensionId = "uBlock0@raymondhill.net"
+    private val extensionUri = "resource://android/assets/extensions/ublock/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,15 +46,94 @@ class MainActivity : AppCompatActivity() {
         setupBackPressHandling()
 
         val targetUrl = intent?.data?.toString() ?: youtubeHomeUrl
-        session.loadUri(targetUrl)
+        initializeAndLoad(targetUrl)
+    }
+
+    private fun initializeAndLoad(targetUrl: String) {
+        binding.progressBar.visibility = View.VISIBLE
+
+        val handler = Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            loadInitialPage(targetUrl)
+        }
+        // Safety timeout so user is never stuck waiting if extension verification is delayed
+        handler.postDelayed(timeoutRunnable, 2500)
+
+        runtime?.webExtensionController?.ensureBuiltIn(extensionUri, extensionId)
+            ?.accept(
+                { extension ->
+                    Log.i("AdFreeYT", "uBlock Origin verified & active: ${extension?.id}")
+                    handler.removeCallbacks(timeoutRunnable)
+                    runOnUiThread {
+                        loadInitialPage(targetUrl)
+                    }
+                },
+                { error ->
+                    Log.e("AdFreeYT", "Error ensuring uBlock Origin: $error")
+                    handler.removeCallbacks(timeoutRunnable)
+                    runOnUiThread {
+                        loadInitialPage(targetUrl)
+                    }
+                }
+            )
+    }
+
+    private fun loadInitialPage(url: String) {
+        if (!pageLoaded) {
+            pageLoaded = true
+            session.loadUri(url)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val url = intent?.data?.toString()
+        if (!url.isNullOrEmpty()) {
+            session.loadUri(url)
+        }
     }
 
     private fun setupGeckoView() {
         val runtimeSettings = GeckoRuntimeSettings.Builder()
             .aboutConfigEnabled(false)
+            .consoleOutput(true)
             .build()
 
         runtime = GeckoRuntime.create(this, runtimeSettings)
+
+        // Set prompt delegate to auto-grant all extension permissions
+        runtime?.webExtensionController?.promptDelegate = object : WebExtensionController.PromptDelegate {
+            override fun onInstallPromptRequest(
+                extension: WebExtension,
+                permissions: Array<out String>,
+                origins: Array<out String>
+            ): GeckoResult<WebExtension.PermissionPromptResponse>? {
+                Log.i("AdFreeYT", "PromptDelegate: auto-allowing extension ${extension.id}")
+                return GeckoResult.fromValue(
+                    WebExtension.PermissionPromptResponse(
+                        true, // isPermissionsGranted
+                        true  // isPrivateModeGranted
+                    )
+                )
+            }
+
+            override fun onOptionalPrompt(
+                extension: WebExtension,
+                permissions: Array<out String>,
+                origins: Array<out String>
+            ): GeckoResult<AllowOrDeny>? {
+                return GeckoResult.fromValue(AllowOrDeny.ALLOW)
+            }
+
+            override fun onUpdatePrompt(
+                extension: WebExtension,
+                newPermissions: Array<out String>,
+                newOrigins: Array<out String>
+            ): GeckoResult<AllowOrDeny>? {
+                return GeckoResult.fromValue(AllowOrDeny.ALLOW)
+            }
+        }
 
         val sessionSettings = GeckoSessionSettings.Builder()
             .useTrackingProtection(true)
@@ -53,17 +142,6 @@ class MainActivity : AppCompatActivity() {
         session = GeckoSession(sessionSettings)
         session.open(runtime!!)
         binding.geckoView.setSession(session)
-
-        // Install genuine uBlock Origin directly from app assets
-        runtime?.webExtensionController?.installBuiltIn("resource://android/assets/extensions/ublock/")
-            ?.accept(
-                { extension ->
-                    Log.i("AdFreeYT", "uBlock Origin loaded: ${extension?.id}")
-                },
-                { error ->
-                    Log.e("AdFreeYT", "Error loading uBlock Origin: $error")
-                }
-            )
 
         // Navigation & Progress handling
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
