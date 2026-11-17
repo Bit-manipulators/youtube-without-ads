@@ -279,7 +279,7 @@ public abstract class BaseListInfoFragment<I extends InfoItem, L extends ListInf
         this.name = !TextUtils.isEmpty(title) ? title : "";
     }
 
-    private void dynamicallyShowErrorPanelOrSnackbar(final ErrorInfo errorInfo) {
+    protected void dynamicallyShowErrorPanelOrSnackbar(final ErrorInfo errorInfo) {
         if (infoListAdapter.getItemCount() == 0) {
             // show error panel only if no items already visible
             showError(errorInfo);
