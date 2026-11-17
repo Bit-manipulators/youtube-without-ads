@@ -5,14 +5,14 @@ coreKtx = "1.13.1"
 appcompat = "1.6.1"
 material = "1.11.0"
 swiperefreshlayout = "1.1.0"
-webkit = "1.11.0"
+geckoview = "125.0.20240408174943"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
-androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
+geckoview = { group = "org.mozilla.geckoview", name = "geckoview-omni", version.ref = "geckoview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
