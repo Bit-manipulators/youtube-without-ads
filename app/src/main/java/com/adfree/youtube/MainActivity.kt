@@ -1,10 +1,8 @@
 package com.adfree.youtube
 
 import android.app.PictureInPictureParams
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -13,7 +11,6 @@ import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.adfree.youtube.databinding.ActivityMainBinding
-import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
@@ -51,7 +48,6 @@ class MainActivity : AppCompatActivity() {
 
         val sessionSettings = GeckoSessionSettings.Builder()
             .useTrackingProtection(true)
-            .fullScreenPictureInPicture(true)
             .build()
 
         session = GeckoSession(sessionSettings)
@@ -97,35 +93,6 @@ class MainActivity : AppCompatActivity() {
         session.navigationDelegate = object : GeckoSession.NavigationDelegate {
             override fun onCanGoBack(session: GeckoSession, canGoBackValue: Boolean) {
                 canGoBack = canGoBackValue
-            }
-
-            override fun onLoadRequest(
-                session: GeckoSession,
-                request: GeckoSession.NavigationDelegate.LoadRequest
-            ): GeckoResult<GeckoSession.NavigationDelegate.LoadRequest.Response>? {
-                val uri = request.uri.lowercase()
-
-                // Keep YouTube, Google login, and auth inside GeckoView
-                val isInternal = uri.contains("youtube.com") ||
-                        uri.contains("youtu.be") ||
-                        uri.contains("google.com") ||
-                        uri.contains("gstatic.com") ||
-                        uri.contains("googleusercontent.com")
-
-                if (isInternal) {
-                    return null // Allow normal load in GeckoView
-                }
-
-                // External links open in browser
-                try {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(request.uri))
-                    startActivity(browserIntent)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-                return GeckoResult.fromValue(
-                    GeckoSession.NavigationDelegate.LoadRequest.Response.DENY
-                )
             }
         }
 
