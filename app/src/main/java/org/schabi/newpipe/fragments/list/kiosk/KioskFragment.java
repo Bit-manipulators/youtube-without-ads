@@ -35,6 +35,7 @@ import org.schabi.newpipe.fragments.list.BaseListInfoFragment;
 import org.schabi.newpipe.util.ExtractorHelper;
 import org.schabi.newpipe.util.KioskTranslator;
 import org.schabi.newpipe.util.Localization;
+import org.schabi.newpipe.util.SuggestionEngine;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -140,10 +141,25 @@ public class KioskFragment extends BaseListInfoFragment<StreamInfoItem, KioskInf
 
     @Override
     public void handleResult(@NonNull final KioskInfo result) {
+        result.setRelatedItems(SuggestionEngine.filterLiveStreams(result.getRelatedItems()));
         super.handleResult(result);
 
         name = kioskTranslatedName;
         setTitle(kioskTranslatedName);
+    }
+
+    @Override
+    public void handleNextItems(final ListExtractor.InfoItemsPage<StreamInfoItem> result) {
+        isLoading.set(false);
+        currentNextPage = result.getNextPage();
+        infoListAdapter.addInfoItemList(SuggestionEngine.filterLiveStreams(result.getItems()));
+
+        showListFooter(hasMoreItems());
+
+        if (!result.getErrors().isEmpty()) {
+            dynamicallyShowErrorPanelOrSnackbar(new ErrorInfo(result.getErrors(),
+                    UserAction.REQUESTED_KIOSK, "Get next items of: " + url, serviceId, url));
+        }
     }
 
     @Override
