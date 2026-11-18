@@ -184,6 +184,10 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setTitle(null);
         }
         toolbarLayoutBinding.toolbar.setTitle(null);
+        if (toolbarLayoutBinding.toolbarSettingsButton != null) {
+            toolbarLayoutBinding.toolbarSettingsButton.setOnClickListener(v ->
+                    NavigationHelper.openSettings(this));
+        }
         getSupportFragmentManager().addOnBackStackChangedListener(this::updateDrawerNavigation);
         try {
             setupDrawer();
