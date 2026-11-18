@@ -363,10 +363,10 @@ public final class ThemeHelper {
     public static ItemViewMode getItemViewMode(final Context context) {
         final String listMode = PreferenceManager.getDefaultSharedPreferences(context)
                 .getString(context.getString(R.string.list_view_mode_key),
-                        context.getString(R.string.list_view_mode_value));
+                        context.getString(R.string.list_view_mode_card_key));
         final ItemViewMode result;
         if (listMode.equals(context.getString(R.string.list_view_mode_list_key))) {
-            result = ItemViewMode.LIST;
+            result = ItemViewMode.CARD;
         } else if (listMode.equals(context.getString(R.string.list_view_mode_grid_key))) {
             result = ItemViewMode.GRID;
         } else if (listMode.equals(context.getString(R.string.list_view_mode_card_key))) {
@@ -379,7 +379,7 @@ public final class ThemeHelper {
             if (useGrid) {
                 result = ItemViewMode.GRID;
             } else {
-                result = ItemViewMode.LIST;
+                result = ItemViewMode.CARD;
             }
         }
         return result;

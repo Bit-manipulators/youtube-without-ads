@@ -20,6 +20,7 @@ import org.schabi.newpipe.extractor.stream.StreamType.POST_LIVE_AUDIO_STREAM
 import org.schabi.newpipe.extractor.stream.StreamType.POST_LIVE_STREAM
 import org.schabi.newpipe.extractor.stream.StreamType.VIDEO_STREAM
 import org.schabi.newpipe.util.Localization
+import org.schabi.newpipe.util.NavigationHelper
 import org.schabi.newpipe.util.StreamTypeUtil
 import org.schabi.newpipe.util.image.CoilHelper
 
@@ -45,7 +46,7 @@ data class StreamItem(
     enum class ItemVersion { NORMAL, MINI, GRID, CARD }
 
     override fun getLayout(): Int = when (itemVersion) {
-        ItemVersion.NORMAL -> R.layout.list_stream_item
+        ItemVersion.NORMAL -> R.layout.list_stream_card_item
         ItemVersion.MINI -> R.layout.list_stream_mini_item
         ItemVersion.GRID -> R.layout.list_stream_grid_item
         ItemVersion.CARD -> R.layout.list_stream_card_item
@@ -56,8 +57,12 @@ data class StreamItem(
     override fun bind(viewBinding: ListStreamItemBinding, position: Int, payloads: MutableList<Any>) {
         if (payloads.contains(UPDATE_RELATIVE_TIME)) {
             if (itemVersion != ItemVersion.MINI) {
-                viewBinding.itemAdditionalDetails.text =
-                    getStreamInfoDetailLine(viewBinding.itemAdditionalDetails.context)
+                val details = getStreamInfoDetailLine(viewBinding.itemAdditionalDetails.context)
+                if (!TextUtils.isEmpty(details) && !TextUtils.isEmpty(stream.uploader)) {
+                    viewBinding.itemAdditionalDetails.text = " • $details"
+                } else {
+                    viewBinding.itemAdditionalDetails.text = details
+                }
             }
             return
         }
@@ -71,12 +76,7 @@ data class StreamItem(
 
         if (stream.duration > 0) {
             viewBinding.itemDurationView.text = Localization.getDurationString(stream.duration)
-            viewBinding.itemDurationView.setBackgroundColor(
-                ContextCompat.getColor(
-                    viewBinding.itemDurationView.context,
-                    R.color.duration_background_color
-                )
-            )
+            viewBinding.itemDurationView.setBackgroundResource(R.drawable.bg_duration_badge)
             viewBinding.itemDurationView.visibility = View.VISIBLE
 
             if (stateProgressTime != null) {
@@ -88,12 +88,7 @@ data class StreamItem(
             }
         } else if (StreamTypeUtil.isLiveStream(stream.streamType)) {
             viewBinding.itemDurationView.setText(R.string.duration_live)
-            viewBinding.itemDurationView.setBackgroundColor(
-                ContextCompat.getColor(
-                    viewBinding.itemDurationView.context,
-                    R.color.live_duration_background_color
-                )
-            )
+            viewBinding.itemDurationView.setBackgroundResource(R.drawable.bg_live_duration_badge)
             viewBinding.itemDurationView.visibility = View.VISIBLE
             viewBinding.itemProgressView.visibility = View.GONE
         } else {
@@ -104,8 +99,36 @@ data class StreamItem(
         CoilHelper.loadThumbnail(viewBinding.itemThumbnailView, stream.thumbnailUrl)
 
         if (itemVersion != ItemVersion.MINI) {
-            viewBinding.itemAdditionalDetails.text =
-                getStreamInfoDetailLine(viewBinding.itemAdditionalDetails.context)
+            val details = getStreamInfoDetailLine(viewBinding.itemAdditionalDetails.context)
+            if (!TextUtils.isEmpty(details) && !TextUtils.isEmpty(stream.uploader)) {
+                viewBinding.itemAdditionalDetails.text = " • $details"
+            } else {
+                viewBinding.itemAdditionalDetails.text = details
+            }
+        }
+
+        viewBinding.itemUploaderView.setOnClickListener { v ->
+            if (!TextUtils.isEmpty(stream.uploaderUrl)) {
+                NavigationHelper.openChannelFragmentUsingIntent(
+                    v.context, stream.serviceId, stream.uploaderUrl, stream.uploader
+                )
+            }
+        }
+
+        viewBinding.itemUploaderAvatarView.let { avatarView ->
+            CoilHelper.loadAvatar(avatarView, null as String?)
+            avatarView.visibility = View.VISIBLE
+            avatarView.setOnClickListener { v ->
+                if (!TextUtils.isEmpty(stream.uploaderUrl)) {
+                    NavigationHelper.openChannelFragmentUsingIntent(
+                        v.context, stream.serviceId, stream.uploaderUrl, stream.uploader
+                    )
+                }
+            }
+        }
+
+        viewBinding.itemMenuButton.setOnClickListener {
+            viewBinding.root.performLongClick()
         }
 
         execBindEnd?.accept(viewBinding)

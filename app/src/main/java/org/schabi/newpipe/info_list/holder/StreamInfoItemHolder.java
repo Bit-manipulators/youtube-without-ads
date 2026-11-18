@@ -1,8 +1,12 @@
 package org.schabi.newpipe.info_list.holder;
 
 import android.text.TextUtils;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
 
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.extractor.InfoItem;
@@ -11,42 +15,27 @@ import org.schabi.newpipe.extractor.stream.StreamType;
 import org.schabi.newpipe.info_list.InfoItemBuilder;
 import org.schabi.newpipe.local.history.HistoryRecordManager;
 import org.schabi.newpipe.util.Localization;
-
-/*
- * Created by Christian Schabesberger on 01.08.16.
- * <p>
- * Copyright (C) Christian Schabesberger 2016 <chris.schabesberger@mailbox.org>
- * StreamInfoItemHolder.java is part of NewPipe.
- * </p>
- * <p>
- * NewPipe is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * </p>
- * <p>
- * NewPipe is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * </p?
- * <p>
- * You should have received a copy of the GNU General Public License
- * along with NewPipe. If not, see <http://www.gnu.org/licenses/>.
- * </p>
- */
+import org.schabi.newpipe.util.NavigationHelper;
+import org.schabi.newpipe.util.image.CoilHelper;
 
 public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
+    @Nullable
     public final TextView itemAdditionalDetails;
+    @Nullable
+    public final ImageView itemUploaderAvatarView;
+    @Nullable
+    public final View itemMenuButton;
 
     public StreamInfoItemHolder(final InfoItemBuilder infoItemBuilder, final ViewGroup parent) {
-        this(infoItemBuilder, R.layout.list_stream_item, parent);
+        this(infoItemBuilder, R.layout.list_stream_card_item, parent);
     }
 
     public StreamInfoItemHolder(final InfoItemBuilder infoItemBuilder, final int layoutId,
                                 final ViewGroup parent) {
         super(infoItemBuilder, layoutId, parent);
         itemAdditionalDetails = itemView.findViewById(R.id.itemAdditionalDetails);
+        itemUploaderAvatarView = itemView.findViewById(R.id.itemUploaderAvatarView);
+        itemMenuButton = itemView.findViewById(R.id.itemMenuButton);
     }
 
     @Override
@@ -59,7 +48,56 @@ public class StreamInfoItemHolder extends StreamMiniInfoItemHolder {
         }
         final StreamInfoItem item = (StreamInfoItem) infoItem;
 
-        itemAdditionalDetails.setText(getStreamInfoDetailLine(item));
+        final String details = getStreamInfoDetailLine(item);
+        if (itemAdditionalDetails != null) {
+            if (!TextUtils.isEmpty(details)) {
+                if (!TextUtils.isEmpty(item.getUploaderName())) {
+                    itemAdditionalDetails.setText(" • " + details);
+                } else {
+                    itemAdditionalDetails.setText(details);
+                }
+            } else {
+                itemAdditionalDetails.setText("");
+            }
+        }
+
+        if (itemUploaderView != null) {
+            itemUploaderView.setOnClickListener(v -> {
+                if (!TextUtils.isEmpty(item.getUploaderUrl())) {
+                    NavigationHelper.openChannelFragmentUsingIntent(
+                            v.getContext(), item.getServiceId(),
+                            item.getUploaderUrl(), item.getUploaderName());
+                }
+            });
+        }
+
+        if (itemUploaderAvatarView != null) {
+            if (item.getUploaderAvatars() != null && !item.getUploaderAvatars().isEmpty()) {
+                CoilHelper.INSTANCE.loadAvatar(itemUploaderAvatarView, item.getUploaderAvatars());
+                itemUploaderAvatarView.setVisibility(View.VISIBLE);
+            } else if (!TextUtils.isEmpty(item.getUploaderUrl())) {
+                CoilHelper.INSTANCE.loadAvatar(itemUploaderAvatarView, (String) null);
+                itemUploaderAvatarView.setVisibility(View.VISIBLE);
+            } else {
+                itemUploaderAvatarView.setVisibility(View.GONE);
+            }
+
+            itemUploaderAvatarView.setOnClickListener(view -> {
+                if (!TextUtils.isEmpty(item.getUploaderUrl())) {
+                    NavigationHelper.openChannelFragmentUsingIntent(
+                            view.getContext(), item.getServiceId(),
+                            item.getUploaderUrl(), item.getUploaderName());
+                }
+            });
+        }
+
+        if (itemMenuButton != null) {
+            itemMenuButton.setOnClickListener(view -> {
+                if (itemBuilder.getOnStreamSelectedListener() != null) {
+                    itemBuilder.getOnStreamSelectedListener().held(item);
+                }
+            });
+        }
     }
 
     private String getStreamInfoDetailLine(final StreamInfoItem infoItem) {

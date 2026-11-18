@@ -1,12 +1,12 @@
 package org.schabi.newpipe.local.holder;
 
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.database.LocalItem;
@@ -16,6 +16,7 @@ import org.schabi.newpipe.local.LocalItemBuilder;
 import org.schabi.newpipe.local.history.HistoryRecordManager;
 import org.schabi.newpipe.util.DependentPreferenceHelper;
 import org.schabi.newpipe.util.Localization;
+import org.schabi.newpipe.util.NavigationHelper;
 import org.schabi.newpipe.util.ServiceHelper;
 import org.schabi.newpipe.util.image.CoilHelper;
 import org.schabi.newpipe.views.AnimatedProgressBar;
@@ -50,11 +51,15 @@ public class LocalStatisticStreamItemHolder extends LocalItemHolder {
     public final TextView itemDurationView;
     @Nullable
     public final TextView itemAdditionalDetails;
+    @Nullable
+    public final ImageView itemUploaderAvatarView;
+    @Nullable
+    public final View itemMenuButton;
     private final AnimatedProgressBar itemProgressView;
 
     public LocalStatisticStreamItemHolder(final LocalItemBuilder itemBuilder,
                                           final ViewGroup parent) {
-        this(itemBuilder, R.layout.list_stream_item, parent);
+        this(itemBuilder, R.layout.list_stream_card_item, parent);
     }
 
     LocalStatisticStreamItemHolder(final LocalItemBuilder infoItemBuilder, final int layoutId,
@@ -66,6 +71,8 @@ public class LocalStatisticStreamItemHolder extends LocalItemHolder {
         itemUploaderView = itemView.findViewById(R.id.itemUploaderView);
         itemDurationView = itemView.findViewById(R.id.itemDurationView);
         itemAdditionalDetails = itemView.findViewById(R.id.itemAdditionalDetails);
+        itemUploaderAvatarView = itemView.findViewById(R.id.itemUploaderAvatarView);
+        itemMenuButton = itemView.findViewById(R.id.itemMenuButton);
         itemProgressView = itemView.findViewById(R.id.itemProgressView);
     }
 
@@ -92,10 +99,8 @@ public class LocalStatisticStreamItemHolder extends LocalItemHolder {
         itemUploaderView.setText(item.getStreamEntity().getUploader());
 
         if (item.getStreamEntity().getDuration() > 0) {
-            itemDurationView.
-                    setText(Localization.getDurationString(item.getStreamEntity().getDuration()));
-            itemDurationView.setBackgroundColor(ContextCompat.getColor(itemBuilder.getContext(),
-                    R.color.duration_background_color));
+            itemDurationView.setText(Localization.getDurationString(item.getStreamEntity().getDuration()));
+            itemDurationView.setBackgroundResource(R.drawable.bg_duration_badge);
             itemDurationView.setVisibility(View.VISIBLE);
 
             if (DependentPreferenceHelper.getPositionsInListsEnabled(itemProgressView.getContext())
@@ -113,7 +118,46 @@ public class LocalStatisticStreamItemHolder extends LocalItemHolder {
         }
 
         if (itemAdditionalDetails != null) {
-            itemAdditionalDetails.setText(getStreamInfoDetailLine(item, dateTimeFormatter));
+            final String details = getStreamInfoDetailLine(item, dateTimeFormatter);
+            if (!TextUtils.isEmpty(details)) {
+                if (!TextUtils.isEmpty(item.getStreamEntity().getUploader())) {
+                    itemAdditionalDetails.setText(" • " + details);
+                } else {
+                    itemAdditionalDetails.setText(details);
+                }
+            } else {
+                itemAdditionalDetails.setText("");
+            }
+        }
+
+        if (itemUploaderView != null) {
+            itemUploaderView.setOnClickListener(v -> {
+                if (!TextUtils.isEmpty(item.getStreamEntity().getUploaderUrl())) {
+                    NavigationHelper.openChannelFragmentUsingIntent(
+                            v.getContext(), item.getStreamEntity().getServiceId(),
+                            item.getStreamEntity().getUploaderUrl(), item.getStreamEntity().getUploader());
+                }
+            });
+        }
+
+        if (itemUploaderAvatarView != null) {
+            CoilHelper.INSTANCE.loadAvatar(itemUploaderAvatarView, (String) null);
+            itemUploaderAvatarView.setVisibility(View.VISIBLE);
+            itemUploaderAvatarView.setOnClickListener(v -> {
+                if (!TextUtils.isEmpty(item.getStreamEntity().getUploaderUrl())) {
+                    NavigationHelper.openChannelFragmentUsingIntent(
+                            v.getContext(), item.getStreamEntity().getServiceId(),
+                            item.getStreamEntity().getUploaderUrl(), item.getStreamEntity().getUploader());
+                }
+            });
+        }
+
+        if (itemMenuButton != null) {
+            itemMenuButton.setOnClickListener(v -> {
+                if (itemBuilder.getOnItemSelectedListener() != null) {
+                    itemBuilder.getOnItemSelectedListener().held(item);
+                }
+            });
         }
 
         // Default thumbnail is shown on error, while loading and if the url is empty

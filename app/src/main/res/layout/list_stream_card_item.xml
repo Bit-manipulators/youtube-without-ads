@@ -5,21 +5,17 @@
     android:id="@+id/itemRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="@dimen/channel_item_grid_padding"
-    android:paddingBottom="@dimen/channel_item_grid_padding"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:paddingBottom="16dp">
 
     <ImageView
         android:id="@+id/itemThumbnailView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="2dp"
         android:scaleType="centerCrop"
         android:src="@drawable/placeholder_thumbnail_video"
-        app:layout_constraintBottom_toTopOf="@+id/itemProgressView"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -29,71 +25,111 @@
         android:id="@+id/itemDurationView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/video_item_search_duration_margin"
-        android:layout_marginBottom="@dimen/video_item_search_duration_margin"
-        android:background="@color/duration_background_color"
-        android:paddingHorizontal="@dimen/video_item_search_duration_horizontal_padding"
-        android:paddingVertical="@dimen/video_item_search_duration_vertical_padding"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_duration_badge"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="2dp"
         android:textAllCaps="true"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/duration_text_color"
-        android:textSize="@dimen/video_item_search_duration_text_size"
+        android:textSize="11sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/itemThumbnailView"
-        app:layout_constraintRight_toRightOf="@id/itemThumbnailView"
-        tools:text="1:09:10" />
-
-    <org.schabi.newpipe.views.NewPipeTextView
-        android:id="@+id/itemVideoTitleView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/margin_small"
-        android:layout_marginEnd="@dimen/margin_small"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:layout_marginTop="@dimen/margin_small"
-        android:textAppearance="?textAppearanceListItem"
         app:layout_constraintEnd_toEndOf="@id/itemThumbnailView"
-        app:layout_constraintStart_toStartOf="@id/itemThumbnailView"
-        app:layout_constraintTop_toBottomOf="@id/itemThumbnailView"
-        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc tristique vitae sem vitae blanditLorem ipsumLorem ipsumLorem ipsumLorem ipsumLorem ipsumLorem ipsumLorem ipsum" />
-
-    <org.schabi.newpipe.views.NewPipeTextView
-        android:id="@+id/itemUploaderView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_micro"
-        android:layout_marginEnd="@dimen/margin_small"
-        android:ellipsize="end"
-        android:lines="1"
-        android:includeFontPadding="false"
-        android:textAppearance="?android:textAppearanceSmall"
-        app:layout_constraintEnd_toStartOf="@id/itemAdditionalDetails"
-        app:layout_constraintStart_toStartOf="@id/itemVideoTitleView"
-        app:layout_constraintTop_toBottomOf="@+id/itemVideoTitleView"
-        tools:text="Uploader" />
-
-    <org.schabi.newpipe.views.NewPipeTextView
-        android:id="@+id/itemAdditionalDetails"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:lines="1"
-        android:includeFontPadding="false"
-        android:textAppearance="?android:textAppearanceSmall"
-        app:layout_constraintBottom_toBottomOf="@id/itemUploaderView"
-        app:layout_constraintEnd_toEndOf="@+id/itemVideoTitleView"
-        app:layout_constraintStart_toEndOf="@id/itemUploaderView"
-        app:layout_constraintTop_toTopOf="@id/itemUploaderView"
-        tools:text="2 years ago • 10M views" />
+        tools:text="14:20" />
 
     <org.schabi.newpipe.views.AnimatedProgressBar
         android:id="@+id/itemProgressView"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
         android:layout_width="0dp"
-        android:layout_height="4dp"
+        android:layout_height="3dp"
         android:progressDrawable="?progress_horizontal_drawable"
         app:layout_constraintBottom_toBottomOf="@id/itemThumbnailView"
         app:layout_constraintEnd_toEndOf="@+id/itemThumbnailView"
         app:layout_constraintStart_toStartOf="@+id/itemThumbnailView" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/itemUploaderAvatarView"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:clickable="true"
+        android:focusable="false"
+        android:scaleType="centerCrop"
+        android:src="@drawable/placeholder_person"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/itemThumbnailView"
+        app:shapeAppearance="@style/CircularImageView"
+        tools:src="@drawable/placeholder_person" />
+
+    <ImageView
+        android:id="@+id/itemMenuButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="6dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="@string/more_options"
+        android:focusable="true"
+        android:padding="6dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_more_vert"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/itemThumbnailView"
+        app:tint="?android:attr/textColorSecondary" />
+
+    <org.schabi.newpipe.views.NewPipeTextView
+        android:id="@+id/itemVideoTitleView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="4dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:lineSpacingMultiplier="1.15"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        app:layout_constraintEnd_toStartOf="@id/itemMenuButton"
+        app:layout_constraintStart_toEndOf="@id/itemUploaderAvatarView"
+        app:layout_constraintTop_toBottomOf="@id/itemThumbnailView"
+        tools:text="Video Title goes here and can take up to two full lines in the YouTube card layout" />
+
+    <org.schabi.newpipe.views.NewPipeTextView
+        android:id="@+id/itemUploaderView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:clickable="true"
+        android:focusable="false"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toStartOf="@id/itemVideoTitleView"
+        app:layout_constraintTop_toBottomOf="@+id/itemVideoTitleView"
+        tools:text="Channel Name" />
+
+    <org.schabi.newpipe.views.NewPipeTextView
+        android:id="@+id/itemAdditionalDetails"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/itemUploaderView"
+        app:layout_constraintEnd_toEndOf="@id/itemVideoTitleView"
+        app:layout_constraintStart_toEndOf="@id/itemUploaderView"
+        app:layout_constraintTop_toTopOf="@id/itemUploaderView"
+        tools:text=" • 1.2M views • 2 weeks ago" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

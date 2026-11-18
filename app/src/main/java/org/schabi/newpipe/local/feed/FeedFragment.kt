@@ -421,7 +421,7 @@ class FeedFragment : BaseStateFragment<FeedState>() {
         val itemVersion = when (getItemViewMode(requireContext())) {
             ItemViewMode.GRID -> StreamItem.ItemVersion.GRID
             ItemViewMode.CARD -> StreamItem.ItemVersion.CARD
-            else -> StreamItem.ItemVersion.NORMAL
+            else -> StreamItem.ItemVersion.CARD
         }
         loadedState.items.forEach { it.itemVersion = itemVersion }
 
