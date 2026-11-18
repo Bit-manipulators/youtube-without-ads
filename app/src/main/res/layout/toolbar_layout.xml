@@ -14,7 +14,9 @@
         android:gravity="center_vertical"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ToolbarTheme"
-        app:contentInsetStart="16dp"
+        android:elevation="4dp"
+        app:title=""
+        app:contentInsetStart="8dp"
         app:contentInsetStartWithNavigation="0dp">
 
         <LinearLayout
@@ -29,6 +31,7 @@
                 android:id="@+id/toolbar_logo"
                 android:layout_width="26dp"
                 android:layout_height="18dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginEnd="6dp"
                 android:contentDescription="@string/app_name"
                 android:src="@drawable/ic_youtube_logo_play" />

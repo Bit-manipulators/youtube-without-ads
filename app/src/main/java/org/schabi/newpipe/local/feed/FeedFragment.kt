@@ -175,6 +175,24 @@ class FeedFragment : BaseStateFragment<FeedState>() {
 
         feedBinding.itemsList.adapter = groupAdapter
         setupListViewMode()
+        if (useAsFrontPage) {
+            setupFrontPagePadding(feedBinding.itemsList)
+        }
+    }
+
+    override fun useAsFrontPage(value: Boolean) {
+        super.useAsFrontPage(value)
+        if (value && _feedBinding != null) {
+            setupFrontPagePadding(feedBinding.itemsList)
+        }
+    }
+
+    private fun setupFrontPagePadding(rv: RecyclerView) {
+        rv.clipToPadding = false
+        val padding = android.util.TypedValue.applyDimension(
+            android.util.TypedValue.COMPLEX_UNIT_DIP, 56f, resources.displayMetrics
+        ).toInt()
+        rv.setPadding(rv.paddingLeft, padding, rv.paddingRight, padding)
     }
 
     override fun onPause() {

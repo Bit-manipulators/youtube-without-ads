@@ -91,7 +91,8 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         youtubeRestrictedModeEnabledKey = getString(R.string.youtube_restricted_mode_enabled);
         youtubeRestrictedModeEnabled = prefs.getBoolean(youtubeRestrictedModeEnabledKey, false);
         mainTabsPositionKey = getString(R.string.main_tabs_position_key);
-        mainTabsPositionBottom = prefs.getBoolean(mainTabsPositionKey, true);
+        mainTabsPositionBottom = true;
+        prefs.edit().putBoolean(mainTabsPositionKey, true).apply();
     }
 
     @Override
@@ -125,11 +126,9 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             setupTabs();
         }
 
-        final boolean newMainTabsPosition = prefs.getBoolean(mainTabsPositionKey, true);
-        if (mainTabsPositionBottom != newMainTabsPosition) {
-            mainTabsPositionBottom = newMainTabsPosition;
-            updateTabLayoutPosition();
-        }
+        mainTabsPositionBottom = true;
+        prefs.edit().putBoolean(mainTabsPositionKey, true).apply();
+        updateTabLayoutPosition();
     }
 
     @Override
@@ -217,10 +216,10 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     }
 
     private void updateTitleForTab(final int tabPosition) {
-        setTitle(getString(R.string.app_name));
         final ActionBar supportActionBar = activity.getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayShowTitleEnabled(false);
+            supportActionBar.setTitle(null);
         }
     }
 
@@ -241,47 +240,37 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         }
         final ScrollableTabLayout tabLayout = binding.mainTabLayout;
         final ViewPager viewPager = binding.pager;
-        final boolean bottom = mainTabsPositionBottom;
+        mainTabsPositionBottom = true;
 
-        // change layout params to make the tab layout appear either at the top or at the bottom
         final var tabParams = (RelativeLayout.LayoutParams) tabLayout.getLayoutParams();
-        final var pagerParams = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
-
-        tabParams.removeRule(bottom ? ALIGN_PARENT_TOP : ALIGN_PARENT_BOTTOM);
-        tabParams.addRule(bottom ? ALIGN_PARENT_BOTTOM : ALIGN_PARENT_TOP);
-        pagerParams.removeRule(bottom ? BELOW : ABOVE);
-        pagerParams.addRule(bottom ? ABOVE : BELOW, R.id.main_tab_layout);
-        tabLayout.setSelectedTabIndicatorGravity(
-                bottom ? INDICATOR_GRAVITY_TOP : INDICATOR_GRAVITY_BOTTOM);
+        tabParams.removeRule(ALIGN_PARENT_TOP);
+        tabParams.addRule(ALIGN_PARENT_BOTTOM);
+        tabLayout.setSelectedTabIndicatorGravity(INDICATOR_GRAVITY_TOP);
         tabLayout.setSelectedTabIndicatorHeight(0);
-
         tabLayout.setLayoutParams(tabParams);
+
+        final var pagerParams = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
+        pagerParams.removeRule(ABOVE);
+        pagerParams.removeRule(BELOW);
         viewPager.setLayoutParams(pagerParams);
 
         // change the background and icon color of the tab layout:
         tabLayout.setBackgroundColor(ThemeHelper.resolveColorFromAttr(requireContext(),
-                bottom ? android.R.attr.windowBackground : R.attr.colorPrimary));
+                android.R.attr.windowBackground));
 
-        if (bottom) {
-            final int selectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
-                    android.R.attr.textColorPrimary);
-            final int unselectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
-                    android.R.attr.textColorSecondary);
-            final int[][] states = new int[][]{
-                    new int[]{android.R.attr.state_selected},
-                    new int[]{}
-            };
-            final int[] colors = new int[]{selectedColor, unselectedColor};
-            final ColorStateList tabColors = new ColorStateList(states, colors);
-            tabLayout.setTabIconTint(tabColors);
-            tabLayout.setTabTextColors(unselectedColor, selectedColor);
-            tabLayout.setTabRippleColor(ColorStateList.valueOf(selectedColor).withAlpha(24));
-        } else {
-            @ColorInt final int iconColor = Color.WHITE;
-            tabLayout.setTabRippleColor(ColorStateList.valueOf(iconColor).withAlpha(32));
-            tabLayout.setTabIconTint(ColorStateList.valueOf(iconColor));
-            tabLayout.setSelectedTabIndicatorColor(iconColor);
-        }
+        final int selectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
+                android.R.attr.textColorPrimary);
+        final int unselectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
+                android.R.attr.textColorSecondary);
+        final int[][] states = new int[][]{
+                new int[]{android.R.attr.state_selected},
+                new int[]{}
+        };
+        final int[] colors = new int[]{selectedColor, unselectedColor};
+        final ColorStateList tabColors = new ColorStateList(states, colors);
+        tabLayout.setTabIconTint(tabColors);
+        tabLayout.setTabTextColors(unselectedColor, selectedColor);
+        tabLayout.setTabRippleColor(ColorStateList.valueOf(selectedColor).withAlpha(24));
     }
 
     @Override

@@ -142,6 +142,26 @@ public abstract class BaseLocalListFragment<I, N> extends BaseStateFragment<I>
         itemListAdapter.setFooter(footerRootBinding.getRoot());
 
         itemsList.setAdapter(itemListAdapter);
+        if (useAsFrontPage) {
+            setupFrontPagePadding(itemsList);
+        }
+    }
+
+    @Override
+    public void useAsFrontPage(final boolean value) {
+        super.useAsFrontPage(value);
+        if (value && itemsList != null) {
+            setupFrontPagePadding(itemsList);
+        }
+    }
+
+    private void setupFrontPagePadding(final RecyclerView rv) {
+        rv.setClipToPadding(false);
+        final int topPadding = (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        final int bottomPadding = (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        rv.setPadding(rv.getPaddingLeft(), topPadding, rv.getPaddingRight(), bottomPadding);
     }
 
     @Override

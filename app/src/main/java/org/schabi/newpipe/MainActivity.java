@@ -179,6 +179,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setSupportActionBar(toolbarLayoutBinding.toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            getSupportActionBar().setTitle(null);
+        }
+        toolbarLayoutBinding.toolbar.setTitle(null);
+        getSupportFragmentManager().addOnBackStackChangedListener(this::updateDrawerNavigation);
         try {
             setupDrawer();
         } catch (final Exception e) {
@@ -764,6 +770,15 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean areBarsVisible = true;
 
+    public int getActionBarHeight() {
+        final android.util.TypedValue tv = new android.util.TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            return android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+        }
+        return (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+    }
+
     public void setBarsVisible(final boolean visible) {
         if (areBarsVisible == visible) {
             return;
@@ -774,19 +789,17 @@ public class MainActivity extends AppCompatActivity {
         final View topBar = toolbarLayoutBinding != null ? toolbarLayoutBinding.getRoot() : null;
         if (topBar != null) {
             topBar.animate().cancel();
+            final int topHeight = topBar.getHeight() > 0 ? topBar.getHeight() : getActionBarHeight();
             if (visible) {
-                topBar.setVisibility(View.VISIBLE);
                 topBar.animate()
                         .translationY(0f)
-                        .alpha(1.0f)
-                        .setDuration(300)
+                        .setDuration(250)
                         .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
                         .start();
             } else {
                 topBar.animate()
-                        .translationY(-topBar.getHeight())
-                        .alpha(0.0f)
-                        .setDuration(260)
+                        .translationY(-topHeight)
+                        .setDuration(250)
                         .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
                         .start();
             }
@@ -798,19 +811,20 @@ public class MainActivity extends AppCompatActivity {
             final View bottomBar = ((MainFragment) fragment).getBottomBar();
             if (bottomBar != null) {
                 bottomBar.animate().cancel();
+                final int bottomHeight = bottomBar.getHeight() > 0
+                        ? bottomBar.getHeight()
+                        : (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
+                                getResources().getDisplayMetrics());
                 if (visible) {
-                    bottomBar.setVisibility(View.VISIBLE);
                     bottomBar.animate()
                             .translationY(0f)
-                            .alpha(1.0f)
-                            .setDuration(300)
+                            .setDuration(250)
                             .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
                             .start();
                 } else {
                     bottomBar.animate()
-                            .translationY(bottomBar.getHeight())
-                            .alpha(0.0f)
-                            .setDuration(260)
+                            .translationY(bottomHeight)
+                            .setDuration(250)
                             .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
                             .start();
                 }
@@ -829,14 +843,25 @@ public class MainActivity extends AppCompatActivity {
 
         final Fragment fragment = getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_holder);
+        final View holder = findViewById(R.id.fragment_holder);
         if (fragment instanceof MainFragment) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
+            getSupportActionBar().setTitle(null);
+            toolbarLayoutBinding.toolbar.setTitle(null);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             if (toolbarLayoutBinding.toolbarTitleContainer != null) {
                 toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
             }
             toolbarLayoutBinding.toolbar.setNavigationIcon(null);
             mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
+
+            if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+                final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
+                if (lp.topMargin != 0) {
+                    lp.topMargin = 0;
+                    holder.setLayoutParams(lp);
+                }
+            }
         } else {
             if (toolbarLayoutBinding.toolbarTitleContainer != null) {
                 toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.GONE);
@@ -845,6 +870,15 @@ public class MainActivity extends AppCompatActivity {
             mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             toolbarLayoutBinding.toolbar.setNavigationOnClickListener(v -> onHomeButtonPressed());
+
+            if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+                final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
+                final int actionBarHeight = getActionBarHeight();
+                if (lp.topMargin != actionBarHeight) {
+                    lp.topMargin = actionBarHeight;
+                    holder.setLayoutParams(lp);
+                }
+            }
         }
         setBarsVisible(true);
     }
