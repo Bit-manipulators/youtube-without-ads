@@ -12,14 +12,14 @@
 <br/>
 
 <!-- BIG DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v3.5.apk">
-  <img src="https://img.shields.io/badge/⬇️_DOWNLOAD_LATEST_BUILD-AdFreeYT_v3.5.apk-E62117?style=for-the-badge&logo=android&logoColor=white&labelColor=1F1F1F" height="60" alt="Download Latest APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v3.6.apk">
+  <img src="https://img.shields.io/badge/⬇️_DOWNLOAD_LATEST_BUILD-AdFreeYT_v3.6.apk-E62117?style=for-the-badge&logo=android&logoColor=white&labelColor=1F1F1F" height="60" alt="Download Latest APK"/>
 </a>
 
 <br/>
 <br/>
 
-[![Direct APK Download](https://img.shields.io/badge/Direct_APK_Mirror-v3.5-333333?style=flat-square&logo=download)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v3.5.apk)
+[![Direct APK Download](https://img.shields.io/badge/Direct_APK_Mirror-v3.6-333333?style=flat-square&logo=download)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v3.6.apk)
 [![All Releases](https://img.shields.io/badge/All_Releases_%26_Changelog-GitHub-grey?style=flat-square&logo=git)](https://github.com/Bit-manipulators/youtube-without-ads/releases)
 
 <p align="center">
