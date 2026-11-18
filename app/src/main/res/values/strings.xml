@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="tab_home">Home</string>
+    <string name="tab_save">Save</string>
+    <string name="tab_history">History</string>
     <string name="main_bg_subtitle">Tap the magnifying glass to get started.</string>
     <string name="upload_date_text">Published on %1$s</string>
     <string name="no_player_found">No stream player found. Install VLC?</string>

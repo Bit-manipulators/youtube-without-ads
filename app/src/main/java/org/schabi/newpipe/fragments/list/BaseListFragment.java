@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.schabi.newpipe.MainActivity;
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.error.ErrorUtil;
 import org.schabi.newpipe.extractor.InfoItem;
@@ -367,6 +368,21 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
     }
 
     class DefaultItemListOnScrolledDownListener extends OnScrollBelowItemsListener {
+        @Override
+        public void onScrolled(@NonNull final RecyclerView recyclerView,
+                               final int dx, final int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            if (Math.abs(dy) > 8 && activity instanceof MainActivity) {
+                if (dy > 0) {
+                    ((MainActivity) activity).setBarsVisible(false);
+                } else if (dy < 0) {
+                    ((MainActivity) activity).setBarsVisible(true);
+                }
+            } else if (!recyclerView.canScrollVertically(-1) && activity instanceof MainActivity) {
+                ((MainActivity) activity).setBarsVisible(true);
+            }
+        }
+
         @Override
         public void onScrolledDown(final RecyclerView recyclerView) {
             onScrollToBottom();

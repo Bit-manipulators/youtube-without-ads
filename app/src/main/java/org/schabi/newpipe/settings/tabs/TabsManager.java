@@ -28,6 +28,14 @@ public final class TabsManager {
     }
 
     public List<Tab> getTabs() {
+        final String currentTabsVer = sharedPreferences.getString("tabs_preset_version", null);
+        if (!"v3_youtube_tabs".equals(currentTabsVer)) {
+            final List<Tab> defaults = getDefaultTabs();
+            saveTabs(defaults);
+            sharedPreferences.edit().putString("tabs_preset_version", "v3_youtube_tabs").apply();
+            return defaults;
+        }
+
         final String savedJson = sharedPreferences.getString(savedTabsKey, null);
         try {
             return TabsJsonHelper.getTabsFromJson(savedJson);

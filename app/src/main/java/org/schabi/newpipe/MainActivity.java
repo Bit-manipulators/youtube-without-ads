@@ -759,6 +759,66 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+    // Bars Visibility & Scroll Animation
+    //////////////////////////////////////////////////////////////////////////*/
+
+    private boolean areBarsVisible = true;
+
+    public void setBarsVisible(final boolean visible) {
+        if (areBarsVisible == visible) {
+            return;
+        }
+        areBarsVisible = visible;
+
+        // Animate Top Bar (Toolbar Layout)
+        final View topBar = toolbarLayoutBinding != null ? toolbarLayoutBinding.getRoot() : null;
+        if (topBar != null) {
+            topBar.animate().cancel();
+            if (visible) {
+                topBar.setVisibility(View.VISIBLE);
+                topBar.animate()
+                        .translationY(0f)
+                        .alpha(1.0f)
+                        .setDuration(300)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
+                        .start();
+            } else {
+                topBar.animate()
+                        .translationY(-topBar.getHeight())
+                        .alpha(0.0f)
+                        .setDuration(260)
+                        .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+                        .start();
+            }
+        }
+
+        // Animate Bottom Bar (Main Tab Layout in MainFragment)
+        final Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
+        if (fragment instanceof MainFragment) {
+            final View bottomBar = ((MainFragment) fragment).getBottomBar();
+            if (bottomBar != null) {
+                bottomBar.animate().cancel();
+                if (visible) {
+                    bottomBar.setVisibility(View.VISIBLE);
+                    bottomBar.animate()
+                            .translationY(0f)
+                            .alpha(1.0f)
+                            .setDuration(300)
+                            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
+                            .start();
+                } else {
+                    bottomBar.animate()
+                            .translationY(bottomBar.getHeight())
+                            .alpha(0.0f)
+                            .setDuration(260)
+                            .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+                            .start();
+                }
+            }
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
     // Utils
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -770,18 +830,23 @@ public class MainActivity extends AppCompatActivity {
         final Fragment fragment = getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_holder);
         if (fragment instanceof MainFragment) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            if (toggle != null) {
-                toggle.syncState();
-                toolbarLayoutBinding.toolbar.setNavigationOnClickListener(v -> mainBinding.getRoot()
-                        .open());
-                mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
+            if (toolbarLayoutBinding.toolbarTitleContainer != null) {
+                toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
             }
+            toolbarLayoutBinding.toolbar.setNavigationIcon(null);
+            mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
         } else {
+            if (toolbarLayoutBinding.toolbarTitleContainer != null) {
+                toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.GONE);
+            }
+            getSupportActionBar().setDisplayShowTitleEnabled(true);
             mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             toolbarLayoutBinding.toolbar.setNavigationOnClickListener(v -> onHomeButtonPressed());
         }
+        setBarsVisible(true);
     }
 
     private void handleIntent(final Intent intent) {

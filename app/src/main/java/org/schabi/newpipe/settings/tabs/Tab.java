@@ -270,7 +270,7 @@ public abstract class Tab {
 
         @Override
         public String getTabName(final Context context) {
-            return context.getString(R.string.tab_bookmarks);
+            return context.getString(R.string.tab_save);
         }
 
         @DrawableRes
@@ -295,7 +295,7 @@ public abstract class Tab {
 
         @Override
         public String getTabName(final Context context) {
-            return context.getString(R.string.title_activity_history);
+            return context.getString(R.string.tab_history);
         }
 
         @DrawableRes
@@ -493,13 +493,13 @@ public abstract class Tab {
 
         @Override
         public String getTabName(final Context context) {
-            return KioskTranslator.getTranslatedKioskName(getDefaultKioskId(context), context);
+            return context.getString(R.string.tab_home);
         }
 
         @DrawableRes
         @Override
         public int getTabIconRes(final Context context) {
-            return KioskTranslator.getKioskIcon(getDefaultKioskId(context));
+            return R.drawable.ic_home;
         }
 
         @Override

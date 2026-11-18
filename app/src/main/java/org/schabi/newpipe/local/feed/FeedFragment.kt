@@ -55,6 +55,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.time.OffsetDateTime
 import java.util.function.Consumer
+import org.schabi.newpipe.MainActivity
 import org.schabi.newpipe.NewPipeDatabase
 import org.schabi.newpipe.R
 import org.schabi.newpipe.database.feed.model.FeedGroupEntity
@@ -147,6 +148,19 @@ class FeedFragment : BaseStateFragment<FeedState>() {
         }
 
         feedBinding.itemsList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (kotlin.math.abs(dy) > 8 && activity is MainActivity) {
+                    if (dy > 0) {
+                        (activity as MainActivity).setBarsVisible(false)
+                    } else if (dy < 0) {
+                        (activity as MainActivity).setBarsVisible(true)
+                    }
+                } else if (!recyclerView.canScrollVertically(-1) && activity is MainActivity) {
+                    (activity as MainActivity).setBarsVisible(true)
+                }
+            }
+
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 // Check if we scrolled to the top
                 if (newState == RecyclerView.SCROLL_STATE_IDLE &&

@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-
-    <org.schabi.newpipe.views.ScrollableTabLayout
-        android:id="@+id/main_tab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="?attr/colorPrimary"
-        app:tabRippleColor="@color/white"
-        app:tabIconTint="@color/white"
-        app:tabIndicatorColor="@color/white"
-        app:tabGravity="fill"
-        app:tabMinWidth="60dp" />
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/main_tab_layout" />
+        android:layout_above="@id/main_tab_layout" />
+
+    <org.schabi.newpipe.views.ScrollableTabLayout
+        android:id="@+id/main_tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:background="?android:attr/windowBackground"
+        android:elevation="8dp"
+        app:tabGravity="fill"
+        app:tabIndicatorHeight="0dp"
+        app:tabMinWidth="80dp"
+        app:tabMode="fixed"
+        app:tabTextAppearance="@style/BottomNavTabTextAppearance" />
 
 </RelativeLayout>

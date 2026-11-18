@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
+import org.schabi.newpipe.MainActivity;
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.databinding.PignateFooterBinding;
 import org.schabi.newpipe.fragments.BaseStateFragment;
@@ -146,6 +147,24 @@ public abstract class BaseLocalListFragment<I, N> extends BaseStateFragment<I>
     @Override
     protected void initListeners() {
         super.initListeners();
+        if (itemsList != null) {
+            itemsList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull final RecyclerView recyclerView,
+                                       final int dx, final int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    if (Math.abs(dy) > 8 && activity instanceof MainActivity) {
+                        if (dy > 0) {
+                            ((MainActivity) activity).setBarsVisible(false);
+                        } else if (dy < 0) {
+                            ((MainActivity) activity).setBarsVisible(true);
+                        }
+                    } else if (!recyclerView.canScrollVertically(-1) && activity instanceof MainActivity) {
+                        ((MainActivity) activity).setBarsVisible(true);
+                    }
+                }
+            });
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////

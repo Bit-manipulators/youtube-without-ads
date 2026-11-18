@@ -34,6 +34,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.tabs.TabLayout;
 
 import org.schabi.newpipe.BaseFragment;
+import org.schabi.newpipe.MainActivity;
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.databinding.FragmentMainBinding;
 import org.schabi.newpipe.error.ErrorInfo;
@@ -90,7 +91,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         youtubeRestrictedModeEnabledKey = getString(R.string.youtube_restricted_mode_enabled);
         youtubeRestrictedModeEnabled = prefs.getBoolean(youtubeRestrictedModeEnabledKey, false);
         mainTabsPositionKey = getString(R.string.main_tabs_position_key);
-        mainTabsPositionBottom = prefs.getBoolean(mainTabsPositionKey, false);
+        mainTabsPositionBottom = prefs.getBoolean(mainTabsPositionKey, true);
     }
 
     @Override
@@ -124,7 +125,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             setupTabs();
         }
 
-        final boolean newMainTabsPosition = prefs.getBoolean(mainTabsPositionKey, false);
+        final boolean newMainTabsPosition = prefs.getBoolean(mainTabsPositionKey, true);
         if (mainTabsPositionBottom != newMainTabsPosition) {
             mainTabsPositionBottom = newMainTabsPosition;
             updateTabLayoutPosition();
@@ -209,13 +210,23 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             if (tabToSet != null) {
                 final Tab tab = tabsList.get(i);
                 tabToSet.setIcon(tab.getTabIconRes(requireContext()));
+                tabToSet.setText(tab.getTabName(requireContext()));
                 tabToSet.setContentDescription(tab.getTabName(requireContext()));
             }
         }
     }
 
     private void updateTitleForTab(final int tabPosition) {
-        setTitle(tabsList.get(tabPosition).getTabName(requireContext()));
+        setTitle(getString(R.string.app_name));
+        final ActionBar supportActionBar = activity.getSupportActionBar();
+        if (supportActionBar != null) {
+            supportActionBar.setDisplayShowTitleEnabled(false);
+        }
+    }
+
+    @Nullable
+    public View getBottomBar() {
+        return binding != null ? binding.mainTabLayout : null;
     }
 
     public void commitPlaylistTabs() {
@@ -225,6 +236,9 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     }
 
     private void updateTabLayoutPosition() {
+        if (binding == null) {
+            return;
+        }
         final ScrollableTabLayout tabLayout = binding.mainTabLayout;
         final ViewPager viewPager = binding.pager;
         final boolean bottom = mainTabsPositionBottom;
@@ -239,21 +253,35 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         pagerParams.addRule(bottom ? ABOVE : BELOW, R.id.main_tab_layout);
         tabLayout.setSelectedTabIndicatorGravity(
                 bottom ? INDICATOR_GRAVITY_TOP : INDICATOR_GRAVITY_BOTTOM);
+        tabLayout.setSelectedTabIndicatorHeight(0);
 
         tabLayout.setLayoutParams(tabParams);
         viewPager.setLayoutParams(pagerParams);
 
         // change the background and icon color of the tab layout:
-        // service-colored at the top, app-background-colored at the bottom
         tabLayout.setBackgroundColor(ThemeHelper.resolveColorFromAttr(requireContext(),
                 bottom ? android.R.attr.windowBackground : R.attr.colorPrimary));
 
-        @ColorInt final int iconColor = bottom
-                ? ThemeHelper.resolveColorFromAttr(requireContext(), android.R.attr.colorAccent)
-                : Color.WHITE;
-        tabLayout.setTabRippleColor(ColorStateList.valueOf(iconColor).withAlpha(32));
-        tabLayout.setTabIconTint(ColorStateList.valueOf(iconColor));
-        tabLayout.setSelectedTabIndicatorColor(iconColor);
+        if (bottom) {
+            final int selectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
+                    android.R.attr.textColorPrimary);
+            final int unselectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
+                    android.R.attr.textColorSecondary);
+            final int[][] states = new int[][]{
+                    new int[]{android.R.attr.state_selected},
+                    new int[]{}
+            };
+            final int[] colors = new int[]{selectedColor, unselectedColor};
+            final ColorStateList tabColors = new ColorStateList(states, colors);
+            tabLayout.setTabIconTint(tabColors);
+            tabLayout.setTabTextColors(unselectedColor, selectedColor);
+            tabLayout.setTabRippleColor(ColorStateList.valueOf(selectedColor).withAlpha(24));
+        } else {
+            @ColorInt final int iconColor = Color.WHITE;
+            tabLayout.setTabRippleColor(ColorStateList.valueOf(iconColor).withAlpha(32));
+            tabLayout.setTabIconTint(ColorStateList.valueOf(iconColor));
+            tabLayout.setSelectedTabIndicatorColor(iconColor);
+        }
     }
 
     @Override
@@ -262,6 +290,9 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             Log.d(TAG, "onTabSelected() called with: selectedTab = [" + selectedTab + "]");
         }
         updateTitleForTab(selectedTab.getPosition());
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).setBarsVisible(true);
+        }
     }
 
     @Override

@@ -107,4 +107,10 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="BottomNavTabTextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
 </resources>
