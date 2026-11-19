@@ -20,10 +20,10 @@ public class LoadController implements LoadControl {
         this.internalLoadControl = new DefaultLoadControl.Builder()
                 .setAllocator(new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE))
                 .setBufferDurationsMs(
-                        60_000,
+                        30_000,
                         120_000,
-                        1_500,
-                        2_500
+                        250,
+                        500
                 )
                 .setTargetBufferBytes(32 * 1024 * 1024)
                 .setPrioritizeTimeOverSizeThresholds(true)
@@ -87,8 +87,10 @@ public class LoadController implements LoadControl {
                                        final float playbackSpeed,
                                        final boolean rebuffering,
                                        final long targetLiveOffsetUs) {
-        return internalLoadControl.shouldStartPlayback(
-                bufferedDurationUs, playbackSpeed, rebuffering, targetLiveOffsetUs);
+        final long minBufferDurationUs = rebuffering ? 500_000L : 200_000L;
+        return bufferedDurationUs >= minBufferDurationUs
+                || internalLoadControl.shouldStartPlayback(
+                        bufferedDurationUs, playbackSpeed, rebuffering, targetLiveOffsetUs);
     }
 
     public void disablePreloadingOfCurrentTrack() {

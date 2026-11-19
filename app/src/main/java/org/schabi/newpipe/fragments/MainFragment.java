@@ -221,6 +221,24 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             supportActionBar.setDisplayShowTitleEnabled(false);
             supportActionBar.setTitle(null);
         }
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).updateToolbarBranding(isHistoryTab(tabPosition));
+        }
+    }
+
+    public boolean isCurrentTabHistory() {
+        if (binding == null || binding.pager == null) {
+            return false;
+        }
+        return isHistoryTab(binding.pager.getCurrentItem());
+    }
+
+    public boolean isHistoryTab(final int tabPosition) {
+        if (tabPosition >= 0 && tabPosition < tabsList.size()) {
+            final Tab tab = tabsList.get(tabPosition);
+            return tab instanceof Tab.HistoryTab || tab.getTabId() == Tab.HistoryTab.ID;
+        }
+        return false;
     }
 
     @Nullable

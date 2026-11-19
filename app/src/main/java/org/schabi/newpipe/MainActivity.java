@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -80,6 +81,7 @@ import org.schabi.newpipe.fragments.detail.VideoDetailFragment;
 import org.schabi.newpipe.fragments.list.comments.CommentRepliesFragment;
 import org.schabi.newpipe.fragments.list.search.SearchFragment;
 import org.schabi.newpipe.local.feed.notifications.NotificationWorker;
+import org.schabi.newpipe.local.history.StatisticsPlaylistFragment;
 import org.schabi.newpipe.player.Player;
 import org.schabi.newpipe.player.event.OnKeyDownListener;
 import org.schabi.newpipe.player.helper.PlayerHolder;
@@ -166,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.onCreate(savedInstanceState);
+        applyTransparentSystemBars();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefEditor = sharedPreferences.edit();
 
@@ -175,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
                 .getHeaderView(0));
         toolbarLayoutBinding = mainBinding.toolbarLayout;
         setContentView(mainBinding.getRoot());
+        updateToolbarBranding(false);
 
         if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
             initFragments();
@@ -548,6 +552,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        applyTransparentSystemBars();
         // Change the date format to match the selected language on resume
         Localization.initPrettyTime(Localization.resolvePrettyTime());
         super.onResume();
@@ -912,6 +917,9 @@ public class MainActivity extends AppCompatActivity {
             toolbarLayoutBinding.toolbar.setNavigationIcon(null);
             mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
 
+            final MainFragment mainFragment = (MainFragment) fragment;
+            updateToolbarBranding(mainFragment.isCurrentTabHistory());
+
             if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
                 final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
                 if (lp.topMargin != 0) {
@@ -919,7 +927,26 @@ public class MainActivity extends AppCompatActivity {
                     holder.setLayoutParams(lp);
                 }
             }
+        } else if (fragment instanceof StatisticsPlaylistFragment) {
+            if (toolbarLayoutBinding.toolbarTitleContainer != null) {
+                toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
+            }
+            updateToolbarBranding(true);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            toolbarLayoutBinding.toolbar.setNavigationOnClickListener(v -> onHomeButtonPressed());
+
+            if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+                final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
+                final int actionBarHeight = getActionBarHeight();
+                if (lp.topMargin != actionBarHeight) {
+                    lp.topMargin = actionBarHeight;
+                    holder.setLayoutParams(lp);
+                }
+            }
         } else {
+            updateToolbarBranding(false);
             if (toolbarLayoutBinding.toolbarTitleContainer != null) {
                 toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.GONE);
             }
@@ -938,6 +965,29 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         setBarsVisible(true);
+    }
+
+    public void updateToolbarBranding(final boolean isHistoryPage) {
+        if (toolbarLayoutBinding == null) {
+            return;
+        }
+        if (toolbarLayoutBinding.toolbarSettingsButton != null) {
+            toolbarLayoutBinding.toolbarSettingsButton.setVisibility(
+                    isHistoryPage ? View.VISIBLE : View.GONE);
+        }
+        if (toolbarLayoutBinding.toolbarLogo != null) {
+            toolbarLayoutBinding.toolbarLogo.setVisibility(
+                    isHistoryPage ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void applyTransparentSystemBars() {
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getWindow().setStatusBarContrastEnforced(false);
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
     }
 
     private void handleIntent(final Intent intent) {
