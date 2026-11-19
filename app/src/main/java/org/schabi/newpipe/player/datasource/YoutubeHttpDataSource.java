@@ -100,8 +100,8 @@ public final class YoutubeHttpDataSource extends BaseDataSource implements HttpD
          */
         public Factory() {
             defaultRequestProperties = new RequestProperties();
-            connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MILLIS;
-            readTimeoutMs = DEFAULT_READ_TIMEOUT_MILLIS;
+            connectTimeoutMs = 20_000;
+            readTimeoutMs = 20_000;
         }
 
         @NonNull

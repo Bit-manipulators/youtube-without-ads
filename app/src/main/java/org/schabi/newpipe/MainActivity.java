@@ -199,6 +199,38 @@ public class MainActivity extends AppCompatActivity {
         }
         openMiniPlayerUponPlayerStarted();
 
+        final BottomSheetBehavior<FragmentContainerView> playerBottomSheetBehavior =
+                BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
+        playerBottomSheetBehavior.addBottomSheetCallback(
+                new BottomSheetBehavior.BottomSheetCallback() {
+                    @Override
+                    public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
+                        if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                            setBarsVisible(false);
+                        } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
+                                || newState == BottomSheetBehavior.STATE_HIDDEN) {
+                            setBarsVisible(true);
+                        }
+                    }
+
+                    @Override
+                    public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {
+                        final Fragment fragment = getSupportFragmentManager()
+                                .findFragmentById(R.id.fragment_holder);
+                        if (fragment instanceof MainFragment) {
+                            final View bottomBar = ((MainFragment) fragment).getBottomBar();
+                            if (bottomBar != null && slideOffset >= 0) {
+                                final int bottomHeight = bottomBar.getHeight() > 0
+                                        ? bottomBar.getHeight()
+                                        : (int) android.util.TypedValue.applyDimension(
+                                                android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
+                                                getResources().getDisplayMetrics());
+                                bottomBar.setTranslationY(bottomHeight * slideOffset);
+                            }
+                        }
+                    }
+                });
+
         if (PermissionHelper.checkPostNotificationsPermission(this,
                 PermissionHelper.POST_NOTIFICATIONS_REQUEST_CODE)) {
             // Schedule worker for checking for new streams and creating corresponding notifications
@@ -785,6 +817,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void setBarsVisible(final boolean visible) {
         if (areBarsVisible == visible) {
+            return;
+        }
+        if (visible && !bottomSheetHiddenOrCollapsed()) {
             return;
         }
         areBarsVisible = visible;

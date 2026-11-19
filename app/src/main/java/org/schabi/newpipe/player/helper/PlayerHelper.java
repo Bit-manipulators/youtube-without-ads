@@ -282,11 +282,11 @@ public final class PlayerHelper {
     }
 
     public static long getPreferredCacheSize() {
-        return 64 * 1024 * 1024L;
+        return 256 * 1024 * 1024L;
     }
 
     public static long getPreferredFileSize() {
-        return 2 * 1024 * 1024L; // ExoPlayer CacheDataSink.MIN_RECOMMENDED_FRAGMENT_SIZE
+        return 4 * 1024 * 1024L;
     }
 
     @NonNull
@@ -377,11 +377,15 @@ public final class PlayerHelper {
                 context.getString(R.string.progressive_load_interval_default_value));
 
         if (context.getString(R.string.progressive_load_interval_exoplayer_default_value)
-                .equals(preferredIntervalBytes)) {
+                .equals(preferredIntervalBytes)
+                || "exoplayer_default".equals(preferredIntervalBytes)) {
             return ProgressiveMediaSource.DEFAULT_LOADING_CHECK_INTERVAL_BYTES;
         }
-        // Keeping the same KiB unit used by ProgressiveMediaSource
-        return Integer.parseInt(preferredIntervalBytes) * 1024;
+        try {
+            return Integer.parseInt(preferredIntervalBytes) * 1024;
+        } catch (final NumberFormatException e) {
+            return ProgressiveMediaSource.DEFAULT_LOADING_CHECK_INTERVAL_BYTES;
+        }
     }
 
     // endregion
