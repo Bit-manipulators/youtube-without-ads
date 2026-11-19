@@ -322,7 +322,7 @@ public final class VideoDetailFragment
         showRelatedItems = prefs.getBoolean(getString(R.string.show_next_video_key), true);
         showDescription = prefs.getBoolean(getString(R.string.show_description_key), true);
         selectedTabTag = prefs.getString(
-                getString(R.string.stream_info_selected_tab_key), COMMENTS_TAB_TAG);
+                getString(R.string.stream_info_selected_tab_key), RELATED_TAB_TAG);
         prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
 
         setupBroadcastReceiver();
@@ -898,18 +898,18 @@ public final class VideoDetailFragment
         tabIcons.clear();
         tabContentDescriptions.clear();
 
-        if (shouldShowComments()) {
-            pageAdapter.addFragment(
-                    CommentsFragment.getInstance(serviceId, url, title), COMMENTS_TAB_TAG);
-            tabIcons.add(R.drawable.ic_comment);
-            tabContentDescriptions.add(R.string.comments_tab_description);
-        }
-
         if (showRelatedItems && binding.relatedItemsLayout == null) {
             // temp empty fragment. will be updated in handleResult
             pageAdapter.addFragment(EmptyFragment.newInstance(false), RELATED_TAB_TAG);
             tabIcons.add(R.drawable.ic_art_track);
             tabContentDescriptions.add(R.string.related_items_tab_description);
+        }
+
+        if (shouldShowComments()) {
+            pageAdapter.addFragment(
+                    CommentsFragment.getInstance(serviceId, url, title), COMMENTS_TAB_TAG);
+            tabIcons.add(R.drawable.ic_comment);
+            tabContentDescriptions.add(R.string.comments_tab_description);
         }
 
         if (showDescription) {
@@ -986,42 +986,10 @@ public final class VideoDetailFragment
     }
 
     public void updateTabLayoutVisibility() {
-
         if (binding == null) {
-            //If binding is null we do not need to and should not do anything with its object(s)
             return;
         }
-
-        if (pageAdapter.getCount() < 2 || binding.viewPager.getVisibility() != View.VISIBLE) {
-            // hide tab layout if there is only one tab or if the view pager is also hidden
-            binding.tabLayout.setVisibility(View.GONE);
-        } else {
-            // call `post()` to be sure `viewPager.getHitRect()`
-            // is up to date and not being currently recomputed
-            binding.tabLayout.post(() -> {
-                final var activity = getActivity();
-                if (activity != null) {
-                    final Rect pagerHitRect = new Rect();
-                    binding.viewPager.getHitRect(pagerHitRect);
-
-                    final int height = DeviceUtils.getWindowHeight(activity.getWindowManager());
-                    final int viewPagerVisibleHeight = height - pagerHitRect.top;
-                    // see TabLayout.DEFAULT_HEIGHT, which is equal to 48dp
-                    final float tabLayoutHeight = TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP, 48, getResources().getDisplayMetrics());
-
-                    if (viewPagerVisibleHeight > tabLayoutHeight * 2) {
-                        // no translation at all when viewPagerVisibleHeight > tabLayout.height * 3
-                        binding.tabLayout.setTranslationY(
-                                Math.max(0, tabLayoutHeight * 3 - viewPagerVisibleHeight));
-                        binding.tabLayout.setVisibility(View.VISIBLE);
-                    } else {
-                        // view pager is not visible enough
-                        binding.tabLayout.setVisibility(View.GONE);
-                    }
-                }
-            });
-        }
+        binding.tabLayout.setVisibility(View.GONE);
     }
 
     public void scrollToTop() {

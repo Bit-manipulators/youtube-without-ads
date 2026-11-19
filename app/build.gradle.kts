@@ -49,9 +49,9 @@ configure<ApplicationExtension> {
             version = release(NEWPIPE_VERSION_SDK_TARGET)
         }
 
-        versionCode = 1025
+        versionCode = 1026
 
-        versionName = "3.7.0"
+        versionName = "3.8.0"
         System.getProperty("versionNameSuffix")?.let { versionNameSuffix = it }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

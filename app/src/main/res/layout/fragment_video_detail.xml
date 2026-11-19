@@ -11,7 +11,7 @@
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/detail_main_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/app_bar_layout"
@@ -582,19 +582,15 @@
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="48dp"
+            android:paddingBottom="0dp"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            app:elevation="16dp"
-            app:tabBackground="?attr/windowBackground"
-            app:tabGravity="fill"
-            app:tabIconTint="?attr/colorAccent"
-            app:tabIndicatorGravity="top" />
+            android:layout_height="0dp"
+            android:visibility="gone"
+            tools:visibility="gone" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

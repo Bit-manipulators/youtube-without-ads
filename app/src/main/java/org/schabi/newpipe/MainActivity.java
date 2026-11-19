@@ -209,6 +209,14 @@ public class MainActivity extends AppCompatActivity {
                             setBarsVisible(false);
                         } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
                                 || newState == BottomSheetBehavior.STATE_HIDDEN) {
+                            final Fragment fragment = getSupportFragmentManager()
+                                    .findFragmentById(R.id.fragment_holder);
+                            if (fragment instanceof MainFragment) {
+                                final View bottomBar = ((MainFragment) fragment).getBottomBar();
+                                if (bottomBar != null) {
+                                    bottomBar.setTranslationY(0f);
+                                }
+                            }
                             setBarsVisible(true);
                         }
                     }
