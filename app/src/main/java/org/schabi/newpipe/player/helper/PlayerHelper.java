@@ -242,12 +242,12 @@ public final class PlayerHelper {
     public static int getMinimizeOnExitAction(@NonNull final Context context) {
         final String action = getPreferences(context)
                 .getString(context.getString(R.string.minimize_on_exit_key), "");
-        if (action.equals(context.getString(R.string.minimize_on_exit_none_key))) {
+        if (action.equals(context.getString(R.string.minimize_on_exit_popup_key))) {
+            return MINIMIZE_ON_EXIT_MODE_POPUP;
+        } else if (action.equals(context.getString(R.string.minimize_on_exit_none_key))) {
             return MINIMIZE_ON_EXIT_MODE_NONE;
-        } else if (action.equals(context.getString(R.string.minimize_on_exit_background_key))) {
-            return MINIMIZE_ON_EXIT_MODE_BACKGROUND;
         } else {
-            return MINIMIZE_ON_EXIT_MODE_POPUP; // default
+            return MINIMIZE_ON_EXIT_MODE_BACKGROUND; // default
         }
     }
 

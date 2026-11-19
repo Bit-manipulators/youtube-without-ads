@@ -728,7 +728,7 @@ public final class VideoDetailFragment
         // That means that we are on the start of the stack,
         if (stack.size() <= 1) {
             restoreDefaultOrientation();
-            minimizeToPopup();
+            minimizeToFloatingPlayer();
             return true;
         }
 
@@ -1072,45 +1072,57 @@ public final class VideoDetailFragment
         }
     }
 
-    private boolean isSwitchingToPopup = false;
-
-    public void minimizeToPopup() {
-        if (activity == null || isDetached()) {
-            return;
-        }
-
-        if (player == null && playQueue == null && currentInfo == null) {
-            if (bottomSheetBehavior != null) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            }
-            return;
-        }
-
-        if (!PermissionHelper.isPopupEnabledElseAsk(activity)) {
-            return;
-        }
-
-        isSwitchingToPopup = true;
-        if (isPlayerAvailable()) {
-            player.setRecovery();
-        }
-        toggleFullscreenIfInFullscreenMode();
-
-        final PlayQueue queue = (isPlayerAvailable() && player.getPlayQueue() != null)
-                ? player.getPlayQueue()
-                : setupPlayQueueForIntent(false);
-
-        if (queue != null) {
-            NavigationHelper.playOnPopupPlayer(activity, queue, true);
-        }
-
-        if (bottomSheetBehavior != null) {
+    public void minimizeToFloatingPlayer() {
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).showFloatingPlayer();
+        } else if (bottomSheetBehavior != null) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
+    }
 
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            isSwitchingToPopup = false;
-        }, 1500);
+    public View detachPlayerViewForFloating() {
+        if (!isPlayerAvailable()) {
+            return null;
+        }
+        final Optional<MainPlayerUi> playerUiOpt = player.UIs().get(MainPlayerUi.class);
+        if (playerUiOpt.isEmpty()) {
+            return null;
+        }
+        final MainPlayerUi playerUi = playerUiOpt.get();
+        final View playerRootView = playerUi.getBinding().getRoot();
+        playerUi.removeViewFromParent();
+        playerUi.getBinding().playbackControlRoot.setVisibility(View.GONE);
+        return playerRootView;
+    }
+
+    public void attachPlayerViewFromFloating() {
+        if (!isPlayerAvailable()) {
+            return;
+        }
+        final Optional<MainPlayerUi> playerUiOpt = player.UIs().get(MainPlayerUi.class);
+        if (playerUiOpt.isEmpty()) {
+            return;
+        }
+        final MainPlayerUi playerUi = playerUiOpt.get();
+        final View playerRootView = playerUi.getBinding().getRoot();
+        playerUi.removeViewFromParent();
+        if (binding != null && binding.playerPlaceholder != null) {
+            if (playerRootView.getParent() != binding.playerPlaceholder) {
+                binding.playerPlaceholder.addView(playerRootView);
+            }
+            playerUi.getBinding().playbackControlRoot.setVisibility(View.VISIBLE);
+            playerUi.setupVideoSurfaceIfNeeded();
+        }
+    }
+
+    public void togglePlayPause() {
+        if (isPlayerAvailable()) {
+            player.playPause();
+        }
+    }
+
+    public boolean isPlaying() {
+        return isPlayerAvailable() && player.isPlaying();
     }
 
     /**
@@ -1452,10 +1464,13 @@ public final class VideoDetailFragment
             public void onReceive(final Context context, final Intent intent) {
                 switch (intent.getAction()) {
                     case ACTION_SHOW_MAIN_PLAYER:
+                        if (activity instanceof MainActivity) {
+                            ((MainActivity) activity).onExpandingMainPlayer();
+                        }
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                         break;
                     case ACTION_HIDE_MAIN_PLAYER:
-                        minimizeToPopup();
+                        minimizeToFloatingPlayer();
                         break;
                     case ACTION_PLAYER_STARTED:
                         // Rebound to the service if it was closed via notification or mini player
@@ -1840,6 +1855,9 @@ public final class VideoDetailFragment
                                  final boolean shuffled,
                                  final PlaybackParameters parameters) {
         setOverlayPlayPauseImage(player != null && player.isPlaying());
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).updateFloatingPlayerPlayPauseButton();
+        }
 
         switch (state) {
             case Player.STATE_PLAYING:
@@ -2278,13 +2296,16 @@ public final class VideoDetailFragment
     /*
      * Remove unneeded information while waiting for a next task
      * */
-    private void cleanUp() {
+    public void cleanUp() {
         // New beginning
         stack.clear();
         if (currentWorker != null) {
             currentWorker.dispose();
         }
-        if (!isSwitchingToPopup && (!isPlayerAvailable() || !player.popupPlayerSelected())) {
+        if (activity instanceof MainActivity
+                && ((MainActivity) activity).isFloatingPlayerActive()) {
+            // Keep service alive while in-app floating player is active
+        } else if (!isPlayerAvailable() || !player.popupPlayerSelected()) {
             playerHolder.stopService();
         }
         setInitialData(0, null, "", null);
@@ -2387,8 +2408,13 @@ public final class VideoDetailFragment
                         manageSpaceAtTheBottom(true);
 
                         bottomSheetBehavior.setPeekHeight(0);
-                        if (!isSwitchingToPopup && isPlayerAvailable() && player.videoPlayerSelected()) {
-                            minimizeToPopup();
+                        if (activity instanceof MainActivity
+                                && ((MainActivity) activity).isFloatingPlayerActive()) {
+                            // In-app floating player is active, do not stop service!
+                        } else if (activity instanceof MainActivity
+                                && isPlayerAvailable()
+                                && player.videoPlayerSelected()) {
+                            ((MainActivity) activity).showFloatingPlayer();
                         } else {
                             cleanUp();
                         }
@@ -2423,7 +2449,7 @@ public final class VideoDetailFragment
                         manageSpaceAtTheBottom(true);
 
                         bottomSheetBehavior.setPeekHeight(0);
-                        minimizeToPopup();
+                        minimizeToFloatingPlayer();
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
                     case BottomSheetBehavior.STATE_SETTLING:
@@ -2454,7 +2480,7 @@ public final class VideoDetailFragment
         // User opened a new page and the player will hide itself
         activity.getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                minimizeToPopup();
+                minimizeToFloatingPlayer();
             }
         });
     }

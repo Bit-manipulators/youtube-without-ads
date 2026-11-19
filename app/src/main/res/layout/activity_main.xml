@@ -26,6 +26,62 @@
             app:behavior_peekHeight="0dp"
             app:layout_behavior="org.schabi.newpipe.player.gesture.CustomBottomSheetBehavior" />
 
+        <!-- In-App Floating Mini Player (Inside App Only) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/in_app_floating_player"
+            android:layout_width="210dp"
+            android:layout_height="118dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="72dp"
+            android:visibility="gone"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="10dp"
+            app:cardBackgroundColor="@android:color/black">
+
+            <FrameLayout
+                android:id="@+id/floating_player_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Invisible touch interceptor for drag and tap-to-expand -->
+            <View
+                android:id="@+id/floating_player_touch_target"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Controls Overlay (Close and Play/Pause) -->
+            <RelativeLayout
+                android:id="@+id/floating_player_controls"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="6dp">
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/floating_player_close_button"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/bg_floating_button"
+                    android:src="@drawable/ic_close"
+                    app:tint="@android:color/white"
+                    android:contentDescription="@string/close" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/floating_player_play_pause_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/bg_floating_button"
+                    android:src="@drawable/ic_pause"
+                    app:tint="@android:color/white"
+                    android:contentDescription="@string/play" />
+
+            </RelativeLayout>
+
+        </androidx.cardview.widget.CardView>
+
     </org.schabi.newpipe.views.FocusAwareCoordinator>
 
     <include

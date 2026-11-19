@@ -32,10 +32,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -198,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
             FocusOverlayView.setupFocusObserver(this);
         }
         openMiniPlayerUponPlayerStarted();
+        setupFloatingPlayer();
 
         final BottomSheetBehavior<FragmentContainerView> playerBottomSheetBehavior =
                 BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
@@ -666,7 +669,7 @@ public class MainActivity extends AppCompatActivity {
             if (fragmentPlayer instanceof BackPressable) {
                 if (!((BackPressable) fragmentPlayer).onBackPressed()) {
                     if (fragmentPlayer instanceof VideoDetailFragment) {
-                        ((VideoDetailFragment) fragmentPlayer).minimizeToPopup();
+                        ((VideoDetailFragment) fragmentPlayer).minimizeToFloatingPlayer();
                     } else {
                         BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder)
                                 .setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -677,6 +680,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
+            if (isFloatingPlayerActive()) {
+                closeFloatingPlayer();
+            }
             finish();
         } else {
             super.onBackPressed();
@@ -996,6 +1002,175 @@ public class MainActivity extends AppCompatActivity {
 
     private void openMiniPlayerIfMissing() {
         // Disabled: do not show bottom mini player panel
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+    // In-App Floating Mini Player
+    //////////////////////////////////////////////////////////////////////////*/
+
+    private float floatingPlayerPrevTouchX, floatingPlayerPrevTouchY;
+    private float floatingPlayerStartX, floatingPlayerStartY;
+    private boolean floatingPlayerIsDragging;
+
+    private void setupFloatingPlayer() {
+        mainBinding.floatingPlayerCloseButton.setOnClickListener(v -> closeFloatingPlayer());
+        mainBinding.floatingPlayerPlayPauseButton.setOnClickListener(v -> toggleFloatingPlayerPlayPause());
+
+        final int touchSlop = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+
+        mainBinding.floatingPlayerTouchTarget.setOnTouchListener((v, event) -> {
+            final View playerView = mainBinding.inAppFloatingPlayer;
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    floatingPlayerPrevTouchX = event.getRawX();
+                    floatingPlayerPrevTouchY = event.getRawY();
+                    floatingPlayerStartX = event.getRawX();
+                    floatingPlayerStartY = event.getRawY();
+                    floatingPlayerIsDragging = false;
+                    return true;
+
+                case MotionEvent.ACTION_MOVE:
+                    final float moveDeltaX = event.getRawX() - floatingPlayerPrevTouchX;
+                    final float moveDeltaY = event.getRawY() - floatingPlayerPrevTouchY;
+                    floatingPlayerPrevTouchX = event.getRawX();
+                    floatingPlayerPrevTouchY = event.getRawY();
+
+                    if (Math.abs(event.getRawX() - floatingPlayerStartX) > touchSlop
+                            || Math.abs(event.getRawY() - floatingPlayerStartY) > touchSlop) {
+                        floatingPlayerIsDragging = true;
+                    }
+
+                    if (floatingPlayerIsDragging) {
+                        final View parent = (View) playerView.getParent();
+                        if (parent != null) {
+                            float newTransX = playerView.getTranslationX() + moveDeltaX;
+                            float newTransY = playerView.getTranslationY() + moveDeltaY;
+
+                            final float minTransX = -playerView.getLeft();
+                            final float maxTransX = parent.getWidth() - playerView.getRight();
+                            final float minTransY = -playerView.getTop();
+                            final float maxTransY = parent.getHeight() - playerView.getBottom()
+                                    - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 60, getResources().getDisplayMetrics());
+
+                            newTransX = Math.max(minTransX, Math.min(newTransX, maxTransX));
+                            newTransY = Math.max(minTransY, Math.min(newTransY, maxTransY));
+
+                            playerView.setTranslationX(newTransX);
+                            playerView.setTranslationY(newTransY);
+                        }
+                    }
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                    if (!floatingPlayerIsDragging) {
+                        expandFromFloatingPlayer();
+                    }
+                    return true;
+
+                default:
+                    return false;
+            }
+        });
+    }
+
+    public boolean isFloatingPlayerActive() {
+        return mainBinding != null && mainBinding.inAppFloatingPlayer.getVisibility() == View.VISIBLE;
+    }
+
+    public void showFloatingPlayer() {
+        final Fragment fragmentPlayer = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player_holder);
+        if (!(fragmentPlayer instanceof VideoDetailFragment)) {
+            return;
+        }
+        final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+
+        // Reset translation to dock nicely in default position
+        mainBinding.inAppFloatingPlayer.setTranslationX(0f);
+        mainBinding.inAppFloatingPlayer.setTranslationY(0f);
+
+        // Hide the full bottom sheet
+        final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
+                BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+        setBarsVisible(true);
+
+        final View playerView = detailFragment.detachPlayerViewForFloating();
+        if (playerView != null) {
+            mainBinding.floatingPlayerContainer.removeAllViews();
+            mainBinding.floatingPlayerContainer.addView(playerView);
+            mainBinding.inAppFloatingPlayer.setVisibility(View.VISIBLE);
+            updateFloatingPlayerPlayPauseButton();
+        }
+    }
+
+    public void expandFromFloatingPlayer() {
+        mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+        mainBinding.floatingPlayerContainer.removeAllViews();
+
+        final Fragment fragmentPlayer = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player_holder);
+        if (fragmentPlayer instanceof VideoDetailFragment) {
+            final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+            detailFragment.attachPlayerViewFromFloating();
+        }
+
+        final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
+                BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        setBarsVisible(false);
+    }
+
+    public void onExpandingMainPlayer() {
+        if (isFloatingPlayerActive()) {
+            mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+            mainBinding.floatingPlayerContainer.removeAllViews();
+            final Fragment fragmentPlayer = getSupportFragmentManager()
+                    .findFragmentById(R.id.fragment_player_holder);
+            if (fragmentPlayer instanceof VideoDetailFragment) {
+                ((VideoDetailFragment) fragmentPlayer).attachPlayerViewFromFloating();
+            }
+        }
+    }
+
+    public void closeFloatingPlayer() {
+        mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+        mainBinding.floatingPlayerContainer.removeAllViews();
+
+        final Fragment fragmentPlayer = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player_holder);
+        if (fragmentPlayer instanceof VideoDetailFragment) {
+            final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+            detailFragment.attachPlayerViewFromFloating();
+            detailFragment.cleanUp();
+        }
+        PlayerHolder.getInstance().stopService();
+    }
+
+    public void toggleFloatingPlayerPlayPause() {
+        final Fragment fragmentPlayer = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player_holder);
+        if (fragmentPlayer instanceof VideoDetailFragment) {
+            final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+            detailFragment.togglePlayPause();
+            updateFloatingPlayerPlayPauseButton();
+        }
+    }
+
+    public void updateFloatingPlayerPlayPauseButton() {
+        if (mainBinding == null) {
+            return;
+        }
+        final Fragment fragmentPlayer = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player_holder);
+        boolean isPlaying = false;
+        if (fragmentPlayer instanceof VideoDetailFragment) {
+            isPlaying = ((VideoDetailFragment) fragmentPlayer).isPlaying();
+        }
+        mainBinding.floatingPlayerPlayPauseButton.setImageResource(
+                isPlaying ? R.drawable.ic_pause : R.drawable.ic_play_arrow);
     }
 
     private void openMiniPlayerUponPlayerStarted() {
