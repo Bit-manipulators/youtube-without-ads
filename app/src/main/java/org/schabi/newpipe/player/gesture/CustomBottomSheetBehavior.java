@@ -46,13 +46,8 @@ public class CustomBottomSheetBehavior extends BottomSheetBehavior<FrameLayout> 
             return false;
         }
 
-        // The interception listens for the child view with the id "fragment_player_holder",
-        // so the following two-finger gesture will be triggered only for the player view on
-        // portrait and for the top controls (visible) on landscape.
-        setSkipCollapsed(event.getPointerCount() == 2);
-        if (event.getPointerCount() == 2) {
-            return super.onInterceptTouchEvent(parent, child, event);
-        }
+        // Skip collapsed state so bottom sheet minimizes directly to popup / hidden
+        setSkipCollapsed(true);
 
         // Don't need to do anything if bottomSheet isn't expanded
         if (getState() == BottomSheetBehavior.STATE_EXPANDED

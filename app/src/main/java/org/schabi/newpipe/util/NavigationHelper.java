@@ -395,11 +395,7 @@ public final class NavigationHelper {
     }
 
     public static void showMiniPlayer(final FragmentManager fragmentManager) {
-        final VideoDetailFragment instance = VideoDetailFragment.getInstanceInCollapsedState();
-        defaultTransaction(fragmentManager)
-                .replace(R.id.fragment_player_holder, instance)
-                .runOnCommit(() -> sendPlayerStartedEvent(instance.requireActivity()))
-                .commitAllowingStateLoss();
+        // Disabled: do not show bottom mini player panel
     }
 
     private interface RunnableWithVideoDetailFragment {
@@ -449,7 +445,7 @@ public final class NavigationHelper {
         };
 
         final Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_player_holder);
-        if (fragment instanceof VideoDetailFragment && fragment.isVisible()) {
+        if (fragment instanceof VideoDetailFragment && fragment.isAdded()) {
             onVideoDetailFragmentReady.run((VideoDetailFragment) fragment);
         } else {
             // Specify no url here, otherwise the VideoDetailFragment will start loading the

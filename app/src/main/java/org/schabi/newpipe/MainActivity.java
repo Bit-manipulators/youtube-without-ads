@@ -665,8 +665,12 @@ public class MainActivity extends AppCompatActivity {
             // delegate the back press to it
             if (fragmentPlayer instanceof BackPressable) {
                 if (!((BackPressable) fragmentPlayer).onBackPressed()) {
-                    BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder)
-                            .setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    if (fragmentPlayer instanceof VideoDetailFragment) {
+                        ((VideoDetailFragment) fragmentPlayer).minimizeToPopup();
+                    } else {
+                        BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder)
+                                .setState(BottomSheetBehavior.STATE_HIDDEN);
+                    }
                 }
                 return;
             }
@@ -991,14 +995,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openMiniPlayerIfMissing() {
-        final Fragment fragmentPlayer = getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_player_holder);
-        if (fragmentPlayer == null) {
-            // We still don't have a fragment attached to the activity. It can happen when a user
-            // started popup or background players without opening a stream inside the fragment.
-            // Adding it in a collapsed state (only mini player will be visible).
-            NavigationHelper.showMiniPlayer(getSupportFragmentManager());
-        }
+        // Disabled: do not show bottom mini player panel
     }
 
     private void openMiniPlayerUponPlayerStarted() {

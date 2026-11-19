@@ -728,7 +728,8 @@ public final class VideoDetailFragment
         // That means that we are on the start of the stack,
         if (stack.size() <= 1) {
             restoreDefaultOrientation();
-            return false; // let MainActivity handle the onBack (e.g. to minimize the mini player)
+            minimizeToPopup();
+            return true;
         }
 
         // Remove top
@@ -1069,6 +1070,47 @@ public final class VideoDetailFragment
             replaceQueueIfUserConfirms(() -> NavigationHelper
                     .playOnPopupPlayer(activity, queue, true));
         }
+    }
+
+    private boolean isSwitchingToPopup = false;
+
+    public void minimizeToPopup() {
+        if (activity == null || isDetached()) {
+            return;
+        }
+
+        if (player == null && playQueue == null && currentInfo == null) {
+            if (bottomSheetBehavior != null) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
+            return;
+        }
+
+        if (!PermissionHelper.isPopupEnabledElseAsk(activity)) {
+            return;
+        }
+
+        isSwitchingToPopup = true;
+        if (isPlayerAvailable()) {
+            player.setRecovery();
+        }
+        toggleFullscreenIfInFullscreenMode();
+
+        final PlayQueue queue = (isPlayerAvailable() && player.getPlayQueue() != null)
+                ? player.getPlayQueue()
+                : setupPlayQueueForIntent(false);
+
+        if (queue != null) {
+            NavigationHelper.playOnPopupPlayer(activity, queue, true);
+        }
+
+        if (bottomSheetBehavior != null) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            isSwitchingToPopup = false;
+        }, 1500);
     }
 
     /**
@@ -1413,13 +1455,9 @@ public final class VideoDetailFragment
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                         break;
                     case ACTION_HIDE_MAIN_PLAYER:
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                        minimizeToPopup();
                         break;
                     case ACTION_PLAYER_STARTED:
-                        // If the state is not hidden we don't need to show the mini player
-                        if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
-                            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                        }
                         // Rebound to the service if it was closed via notification or mini player
                         if (!playerHolder.isBound()) {
                             playerHolder.startService(
@@ -2246,7 +2284,9 @@ public final class VideoDetailFragment
         if (currentWorker != null) {
             currentWorker.dispose();
         }
-        playerHolder.stopService();
+        if (!isSwitchingToPopup && (!isPlayerAvailable() || !player.popupPlayerSelected())) {
+            playerHolder.stopService();
+        }
         setInitialData(0, null, "", null);
         currentInfo = null;
         updateOverlayData(null, null, List.of());
@@ -2324,16 +2364,16 @@ public final class VideoDetailFragment
         bottomSheetBehavior.setState(lastStableBottomSheetState);
         updateBottomSheetState(lastStableBottomSheetState);
 
-        final int peekHeight = getResources().getDimensionPixelSize(R.dimen.mini_player_height);
+        final int peekHeight = 0;
         if (bottomSheetState != BottomSheetBehavior.STATE_HIDDEN) {
             manageSpaceAtTheBottom(false);
-            bottomSheetBehavior.setPeekHeight(peekHeight);
-            if (bottomSheetState == BottomSheetBehavior.STATE_COLLAPSED) {
-                binding.overlayLayout.setAlpha(MAX_OVERLAY_ALPHA);
-            } else if (bottomSheetState == BottomSheetBehavior.STATE_EXPANDED) {
+            bottomSheetBehavior.setPeekHeight(0);
+            bottomSheetBehavior.setSkipCollapsed(true);
+            if (binding != null && binding.overlayLayout != null) {
+                binding.overlayLayout.setVisibility(View.GONE);
                 binding.overlayLayout.setAlpha(0);
-                setOverlayElementsClickable(false);
             }
+            setOverlayElementsClickable(false);
         }
 
         bottomSheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
@@ -2347,13 +2387,22 @@ public final class VideoDetailFragment
                         manageSpaceAtTheBottom(true);
 
                         bottomSheetBehavior.setPeekHeight(0);
-                        cleanUp();
+                        if (!isSwitchingToPopup && isPlayerAvailable() && player.videoPlayerSelected()) {
+                            minimizeToPopup();
+                        } else {
+                            cleanUp();
+                        }
                         break;
                     case BottomSheetBehavior.STATE_EXPANDED:
                         moveFocusToMainFragment(false);
                         manageSpaceAtTheBottom(false);
 
-                        bottomSheetBehavior.setPeekHeight(peekHeight);
+                        bottomSheetBehavior.setPeekHeight(0);
+                        bottomSheetBehavior.setSkipCollapsed(true);
+                        if (binding != null && binding.overlayLayout != null) {
+                            binding.overlayLayout.setVisibility(View.GONE);
+                            binding.overlayLayout.setAlpha(0);
+                        }
                         // Disable click because overlay buttons located on top of buttons
                         // from the player
                         setOverlayElementsClickable(false);
@@ -2371,17 +2420,10 @@ public final class VideoDetailFragment
                         break;
                     case BottomSheetBehavior.STATE_COLLAPSED:
                         moveFocusToMainFragment(true);
-                        manageSpaceAtTheBottom(false);
+                        manageSpaceAtTheBottom(true);
 
-                        bottomSheetBehavior.setPeekHeight(peekHeight);
-
-                        // Re-enable clicks
-                        setOverlayElementsClickable(true);
-                        if (isPlayerAvailable()) {
-                            player.UIs().get(MainPlayerUi.class)
-                                    .ifPresent(MainPlayerUi::closeItemsList);
-                        }
-                        setOverlayLook(binding.appBarLayout, behavior, 0);
+                        bottomSheetBehavior.setPeekHeight(0);
+                        minimizeToPopup();
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
                     case BottomSheetBehavior.STATE_SETTLING:
@@ -2412,7 +2454,7 @@ public final class VideoDetailFragment
         // User opened a new page and the player will hide itself
         activity.getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                minimizeToPopup();
             }
         });
     }
@@ -2448,13 +2490,13 @@ public final class VideoDetailFragment
     private void setOverlayLook(final AppBarLayout appBar,
                                 final AppBarLayout.Behavior behavior,
                                 final float slideOffset) {
-        // SlideOffset < 0 when mini player is about to close via swipe.
-        // Stop animation in this case
         if (behavior == null || slideOffset < 0) {
             return;
         }
-        binding.overlayLayout.setAlpha(Math.min(MAX_OVERLAY_ALPHA, 1 - slideOffset));
-        // These numbers are not special. They just do a cool transition
+        if (binding != null && binding.overlayLayout != null) {
+            binding.overlayLayout.setVisibility(View.GONE);
+            binding.overlayLayout.setAlpha(0f);
+        }
         behavior.setTopAndBottomOffset(
                 (int) (-binding.detailThumbnailImageView.getHeight() * 2 * (1 - slideOffset) / 3));
         appBar.requestLayout();
