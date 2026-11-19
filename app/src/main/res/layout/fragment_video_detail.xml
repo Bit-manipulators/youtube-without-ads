@@ -8,34 +8,21 @@
     android:background="?attr/windowBackground"
     android:focusableInTouchMode="true">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/detail_main_content"
+    <LinearLayout
+        android:id="@+id/detail_root_linear_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/app_bar_layout"
+        <!-- THUMBNAIL / PINNED VIDEO PLAYER -->
+        <FrameLayout
+            android:id="@+id/detail_thumbnail_root_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            app:elevation="0dp"
-            app:layout_behavior="com.google.android.material.appbar.FlingBehavior">
-
-            <org.schabi.newpipe.views.CustomCollapsingToolbarLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed">
-
-                <!-- THUMBNAIL -->
-                <FrameLayout
-                    android:id="@+id/detail_thumbnail_root_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/black"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:layout_collapseMode="pin">
+            android:background="@android:color/black"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
                     <ImageView
                         android:id="@+id/detail_thumbnail_image_view"
@@ -147,7 +134,21 @@
                         android:layout_height="match_parent" />
 
                 </FrameLayout>
-            </org.schabi.newpipe.views.CustomCollapsingToolbarLayout>
+
+        <!-- SCROLLING CONTENT BELOW PLAYER -->
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:id="@+id/detail_main_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/app_bar_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/windowBackground"
+                app:elevation="0dp"
+                app:layout_behavior="com.google.android.material.appbar.FlingBehavior">
 
             <!-- CONTENT -->
             <RelativeLayout
@@ -593,6 +594,8 @@
             tools:visibility="gone" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    </LinearLayout>
 
     <RelativeLayout
         android:id="@+id/overlay_layout"

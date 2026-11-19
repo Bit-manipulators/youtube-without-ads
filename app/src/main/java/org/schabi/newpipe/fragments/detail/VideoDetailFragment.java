@@ -1345,12 +1345,13 @@ public final class VideoDetailFragment
     private void setHeightThumbnail(final int newHeight, final DisplayMetrics metrics) {
         binding.detailThumbnailImageView.setLayoutParams(
                 new FrameLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.MATCH_PARENT, newHeight));
+                        FrameLayout.LayoutParams.MATCH_PARENT, newHeight));
         binding.detailThumbnailImageView.setMinimumHeight(newHeight);
-        binding.detailThumbnailRootLayout.setMinimumHeight(newHeight);
-        if (binding.detailThumbnailRootLayout.getParent() instanceof View) {
-            ((View) binding.detailThumbnailRootLayout.getParent()).setMinimumHeight(newHeight);
+        if (binding.detailThumbnailRootLayout.getLayoutParams() != null) {
+            binding.detailThumbnailRootLayout.getLayoutParams().height = newHeight;
+            binding.detailThumbnailRootLayout.requestLayout();
         }
+        binding.detailThumbnailRootLayout.setMinimumHeight(newHeight);
         if (isPlayerAvailable()) {
             final int maxHeight = (int) (metrics.heightPixels * MAX_PLAYER_HEIGHT);
             player.UIs().get(VideoPlayerUi.class).ifPresent(ui ->
