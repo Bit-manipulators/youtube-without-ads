@@ -721,11 +721,39 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
     //////////////////////////////////////////////////////////////////////////*/
     //region Controls showing / hiding
 
+    private boolean isMiniFloatingMode = false;
+
+    public void setMiniFloatingMode(final boolean miniFloatingMode) {
+        this.isMiniFloatingMode = miniFloatingMode;
+        if (binding != null && binding.playbackControlRoot != null) {
+            if (miniFloatingMode) {
+                binding.playbackControlRoot.setVisibility(View.GONE);
+                showHideShadow(false, 0);
+            } else {
+                binding.playbackControlRoot.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    public boolean isMiniFloatingMode() {
+        return isMiniFloatingMode;
+    }
+
     public boolean isControlsVisible() {
+        if (isMiniFloatingMode) {
+            return false;
+        }
         return binding != null && binding.playbackControlRoot.getVisibility() == View.VISIBLE;
     }
 
     public void showControlsThenHide() {
+        if (isMiniFloatingMode) {
+            if (binding != null && binding.playbackControlRoot != null) {
+                binding.playbackControlRoot.setVisibility(View.GONE);
+                showHideShadow(false, 0);
+            }
+            return;
+        }
         if (DEBUG) {
             Log.d(TAG, "showControlsThenHide() called");
         }
@@ -743,6 +771,13 @@ public abstract class VideoPlayerUi extends PlayerUi implements SeekBar.OnSeekBa
     }
 
     public void showControls(final long duration) {
+        if (isMiniFloatingMode) {
+            if (binding != null && binding.playbackControlRoot != null) {
+                binding.playbackControlRoot.setVisibility(View.GONE);
+                showHideShadow(false, 0);
+            }
+            return;
+        }
         if (DEBUG) {
             Log.d(TAG, "showControls() called");
         }

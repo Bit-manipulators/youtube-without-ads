@@ -20,12 +20,12 @@ public class LoadController implements LoadControl {
         this.internalLoadControl = new DefaultLoadControl.Builder()
                 .setAllocator(new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE))
                 .setBufferDurationsMs(
-                        30_000,
+                        50_000,
                         120_000,
-                        250,
-                        500
+                        1_500,
+                        3_000
                 )
-                .setTargetBufferBytes(32 * 1024 * 1024)
+                .setTargetBufferBytes(C.LENGTH_UNSET)
                 .setPrioritizeTimeOverSizeThresholds(true)
                 .setBackBuffer(30_000, true)
                 .build();

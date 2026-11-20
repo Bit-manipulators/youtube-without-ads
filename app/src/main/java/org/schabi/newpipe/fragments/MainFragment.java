@@ -25,6 +25,9 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapterMenuWorkaround;
@@ -107,6 +110,14 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         super.initViews(rootView, savedInstanceState);
 
         binding = FragmentMainBinding.bind(rootView);
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, windowInsets) -> {
+            final Insets navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            if (binding != null && binding.mainTabLayout != null) {
+                binding.mainTabLayout.setPadding(0, 0, 0, navInsets.bottom);
+            }
+            return windowInsets;
+        });
 
         binding.mainTabLayout.setupWithViewPager(binding.pager);
         binding.mainTabLayout.addOnTabSelectedListener(this);
@@ -234,7 +245,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     }
 
     public boolean isHistoryTab(final int tabPosition) {
-        if (tabPosition >= 0 && tabPosition < tabsList.size()) {
+        if (tabsList != null && tabPosition >= 0 && tabPosition < tabsList.size()) {
             final Tab tab = tabsList.get(tabPosition);
             return tab instanceof Tab.HistoryTab || tab.getTabId() == Tab.HistoryTab.ID;
         }

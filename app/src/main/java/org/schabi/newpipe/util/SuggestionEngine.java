@@ -135,17 +135,19 @@ public final class SuggestionEngine {
                 .map(SearchInfo::getRelatedItems)
                 .map(items -> {
                     final List<StreamInfoItem> randomCandidates = new ArrayList<>();
-                    for (final InfoItem item : items) {
-                        if (item instanceof StreamInfoItem) {
-                            final StreamInfoItem streamItem = (StreamInfoItem) item;
-                            if (!isLiveStreamItem(streamItem)) {
-                                randomCandidates.add(streamItem);
+                    if (items != null) {
+                        for (final InfoItem item : items) {
+                            if (item instanceof StreamInfoItem) {
+                                final StreamInfoItem streamItem = (StreamInfoItem) item;
+                                if (!isLiveStreamItem(streamItem)) {
+                                    randomCandidates.add(streamItem);
+                                }
                             }
                         }
                     }
                     Collections.shuffle(randomCandidates);
                     final int count = Math.min(limit, randomCandidates.size());
-                    return randomCandidates.subList(0, count);
+                    return new ArrayList<>(randomCandidates.subList(0, count));
                 }))
                 .onErrorReturn(throwable -> {
                     Log.w(TAG, "Error fetching random videos, falling back", throwable);

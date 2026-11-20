@@ -1090,9 +1090,11 @@ public final class VideoDetailFragment
             return null;
         }
         final MainPlayerUi playerUi = playerUiOpt.get();
+        playerUi.setMiniFloatingMode(true);
         final View playerRootView = playerUi.getBinding().getRoot();
-        playerUi.removeViewFromParent();
-        playerUi.getBinding().playbackControlRoot.setVisibility(View.GONE);
+        if (playerRootView.getParent() instanceof ViewGroup) {
+            ((ViewGroup) playerRootView.getParent()).removeView(playerRootView);
+        }
         return playerRootView;
     }
 
@@ -1105,13 +1107,13 @@ public final class VideoDetailFragment
             return;
         }
         final MainPlayerUi playerUi = playerUiOpt.get();
+        playerUi.setMiniFloatingMode(false);
         final View playerRootView = playerUi.getBinding().getRoot();
-        playerUi.removeViewFromParent();
+        if (playerRootView.getParent() instanceof ViewGroup) {
+            ((ViewGroup) playerRootView.getParent()).removeView(playerRootView);
+        }
         if (binding != null && binding.playerPlaceholder != null) {
-            if (playerRootView.getParent() != binding.playerPlaceholder) {
-                binding.playerPlaceholder.addView(playerRootView);
-            }
-            playerUi.getBinding().playbackControlRoot.setVisibility(View.VISIBLE);
+            binding.playerPlaceholder.addView(playerRootView);
             playerUi.setupVideoSurfaceIfNeeded();
         }
     }

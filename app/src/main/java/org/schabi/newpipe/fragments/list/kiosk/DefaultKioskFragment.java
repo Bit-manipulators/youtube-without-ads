@@ -34,7 +34,10 @@ public class DefaultKioskFragment extends KioskFragment {
 
     @Override
     public Single<KioskInfo> loadResult(final boolean forceReload) {
-        contentCountry = Localization.getPreferredContentCountry(requireContext());
+        final Context ctx = getContext();
+        if (ctx != null) {
+            contentCountry = Localization.getPreferredContentCountry(ctx);
+        }
         pageCounter = 1;
         return SuggestionEngine.loadHomeFeed(serviceId, url, forceReload)
                 .map(kioskInfo -> {

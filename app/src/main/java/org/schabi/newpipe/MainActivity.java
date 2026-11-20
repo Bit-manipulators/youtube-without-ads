@@ -54,7 +54,12 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentContainerView;
@@ -178,6 +183,15 @@ public class MainActivity extends AppCompatActivity {
                 .getHeaderView(0));
         toolbarLayoutBinding = mainBinding.toolbarLayout;
         setContentView(mainBinding.getRoot());
+
+        ViewCompat.setOnApplyWindowInsetsListener(mainBinding.getRoot(), (v, windowInsets) -> {
+            final Insets statusInsets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+            if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
+                toolbarLayoutBinding.getRoot().setPadding(0, statusInsets.top, 0, 0);
+            }
+            return windowInsets;
+        });
+
         updateToolbarBranding(false);
 
         if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
@@ -982,11 +996,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void applyTransparentSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setStatusBarContrastEnforced(false);
             getWindow().setNavigationBarContrastEnforced(false);
+        }
+
+        final WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (insetsController != null) {
+            final boolean isLight = ThemeHelper.isLightThemeSelected(this);
+            insetsController.setAppearanceLightStatusBars(isLight);
+            insetsController.setAppearanceLightNavigationBars(isLight);
         }
     }
 
@@ -1061,6 +1084,9 @@ public class MainActivity extends AppCompatActivity {
     private float floatingPlayerPrevTouchX, floatingPlayerPrevTouchY;
     private float floatingPlayerStartX, floatingPlayerStartY;
     private boolean floatingPlayerIsDragging;
+    private boolean isFloatingPlayerActive = false;
+    private final Handler floatingControlsHandler = new Handler(Looper.getMainLooper());
+    private final Runnable hideFloatingControlsRunnable = () -> hideFloatingPlayerControls();
 
     private void setupFloatingPlayer() {
         mainBinding.floatingPlayerCloseButton.setOnClickListener(v -> closeFloatingPlayer());
@@ -1114,7 +1140,12 @@ public class MainActivity extends AppCompatActivity {
 
                 case MotionEvent.ACTION_UP:
                     if (!floatingPlayerIsDragging) {
-                        expandFromFloatingPlayer();
+                        if (mainBinding.floatingPlayerControls.getVisibility() != View.VISIBLE
+                                || mainBinding.floatingPlayerControls.getAlpha() < 0.5f) {
+                            showFloatingPlayerControls();
+                        } else {
+                            expandFromFloatingPlayer();
+                        }
                     }
                     return true;
 
@@ -1124,11 +1155,42 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void showFloatingPlayerControls() {
+        if (mainBinding == null) {
+            return;
+        }
+        floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
+        mainBinding.floatingPlayerControls.setVisibility(View.VISIBLE);
+        mainBinding.floatingPlayerControls.animate()
+                .alpha(1.0f)
+                .setDuration(150)
+                .start();
+        floatingControlsHandler.postDelayed(hideFloatingControlsRunnable, 2000);
+    }
+
+    public void hideFloatingPlayerControls() {
+        if (mainBinding == null) {
+            return;
+        }
+        mainBinding.floatingPlayerControls.animate()
+                .alpha(0.0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    if (mainBinding != null) {
+                        mainBinding.floatingPlayerControls.setVisibility(View.GONE);
+                    }
+                })
+                .start();
+    }
+
     public boolean isFloatingPlayerActive() {
-        return mainBinding != null && mainBinding.inAppFloatingPlayer.getVisibility() == View.VISIBLE;
+        return isFloatingPlayerActive;
     }
 
     public void showFloatingPlayer() {
+        if (isFloatingPlayerActive) {
+            return;
+        }
         final Fragment fragmentPlayer = getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_player_holder);
         if (!(fragmentPlayer instanceof VideoDetailFragment)) {
@@ -1136,9 +1198,10 @@ public class MainActivity extends AppCompatActivity {
         }
         final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
 
-        // Reset translation to dock nicely in default position
+        isFloatingPlayerActive = true;
         mainBinding.inAppFloatingPlayer.setTranslationX(0f);
         mainBinding.inAppFloatingPlayer.setTranslationY(0f);
+        mainBinding.inAppFloatingPlayer.setVisibility(View.VISIBLE);
 
         // Hide the full bottom sheet
         final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
@@ -1149,14 +1212,22 @@ public class MainActivity extends AppCompatActivity {
 
         final View playerView = detailFragment.detachPlayerViewForFloating();
         if (playerView != null) {
+            if (playerView.getParent() instanceof ViewGroup) {
+                ((ViewGroup) playerView.getParent()).removeView(playerView);
+            }
             mainBinding.floatingPlayerContainer.removeAllViews();
             mainBinding.floatingPlayerContainer.addView(playerView);
-            mainBinding.inAppFloatingPlayer.setVisibility(View.VISIBLE);
             updateFloatingPlayerPlayPauseButton();
+            showFloatingPlayerControls();
+        } else {
+            isFloatingPlayerActive = false;
+            mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
         }
     }
 
     public void expandFromFloatingPlayer() {
+        floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
+        isFloatingPlayerActive = false;
         mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
         mainBinding.floatingPlayerContainer.removeAllViews();
 
@@ -1175,6 +1246,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void onExpandingMainPlayer() {
         if (isFloatingPlayerActive()) {
+            floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
+            isFloatingPlayerActive = false;
             mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
             mainBinding.floatingPlayerContainer.removeAllViews();
             final Fragment fragmentPlayer = getSupportFragmentManager()
@@ -1186,6 +1259,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void closeFloatingPlayer() {
+        floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
+        isFloatingPlayerActive = false;
         mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
         mainBinding.floatingPlayerContainer.removeAllViews();
 
@@ -1206,6 +1281,8 @@ public class MainActivity extends AppCompatActivity {
             final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
             detailFragment.togglePlayPause();
             updateFloatingPlayerPlayPauseButton();
+            floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
+            floatingControlsHandler.postDelayed(hideFloatingControlsRunnable, 2000);
         }
     }
 
