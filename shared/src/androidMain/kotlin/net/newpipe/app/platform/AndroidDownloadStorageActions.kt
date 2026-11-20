@@ -38,8 +38,8 @@ class AndroidDownloadStorageActions(context: Context) : DownloadStorageActions {
         get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
 
     override fun defaultDownloadFolders() = DownloadFolders(
-        video = newPipeFolderIn(Environment.DIRECTORY_MOVIES),
-        audio = newPipeFolderIn(Environment.DIRECTORY_MUSIC)
+        video = newPipeFolderIn(Environment.DIRECTORY_DOWNLOADS),
+        audio = newPipeFolderIn(Environment.DIRECTORY_DOWNLOADS)
     )
 
     override fun displayFolder(storedValue: String): String? {

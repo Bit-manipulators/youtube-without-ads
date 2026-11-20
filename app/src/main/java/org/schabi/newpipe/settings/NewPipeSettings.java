@@ -69,12 +69,12 @@ public final class NewPipeSettings {
 
     static void saveDefaultVideoDownloadDirectory(final Context context) {
         saveDefaultDirectory(context, R.string.download_path_video_key,
-                Environment.DIRECTORY_MOVIES);
+                Environment.DIRECTORY_DOWNLOADS);
     }
 
     static void saveDefaultAudioDownloadDirectory(final Context context) {
         saveDefaultDirectory(context, R.string.download_path_audio_key,
-                Environment.DIRECTORY_MUSIC);
+                Environment.DIRECTORY_DOWNLOADS);
     }
 
     private static void saveDefaultDirectory(final Context context, final int keyID,

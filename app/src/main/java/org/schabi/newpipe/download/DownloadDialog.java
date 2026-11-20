@@ -825,12 +825,8 @@ public class DownloadDialog extends DialogFragment
             if (NewPipeSettings.useStorageAccessFramework(context)) {
                 initialPath = null;
             } else {
-                final File initialSavePath;
-                if (dialogBinding.videoAudioGroup.getCheckedRadioButtonId() == R.id.audio_button) {
-                    initialSavePath = NewPipeSettings.getDir(Environment.DIRECTORY_MUSIC);
-                } else {
-                    initialSavePath = NewPipeSettings.getDir(Environment.DIRECTORY_MOVIES);
-                }
+                final File initialSavePath =
+                        NewPipeSettings.getDir(Environment.DIRECTORY_DOWNLOADS);
                 initialPath = Uri.parse(initialSavePath.getAbsolutePath());
             }
 

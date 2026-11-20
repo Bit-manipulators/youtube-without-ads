@@ -268,12 +268,8 @@ public class MissionsFragment extends Fragment {
         if (NewPipeSettings.useStorageAccessFramework(mContext)) {
             initialPath = null;
         } else {
-            final File initialSavePath;
-            if (DownloadManager.TAG_AUDIO.equals(mission.storage.getType())) {
-                initialSavePath = NewPipeSettings.getDir(Environment.DIRECTORY_MUSIC);
-            } else {
-                initialSavePath = NewPipeSettings.getDir(Environment.DIRECTORY_MOVIES);
-            }
+            final File initialSavePath =
+                    NewPipeSettings.getDir(Environment.DIRECTORY_DOWNLOADS);
             initialPath = Uri.parse(initialSavePath.getAbsolutePath());
         }
 

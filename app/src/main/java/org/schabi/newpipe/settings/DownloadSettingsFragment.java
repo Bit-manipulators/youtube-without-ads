@@ -60,11 +60,21 @@ public class DownloadSettingsFragment extends BasePreferenceFragment {
         prefStorageAsk = findPreference(downloadStorageAsk);
 
         final SwitchPreferenceCompat prefUseSaf = findPreference(storageUseSafPreference);
-        prefUseSaf.setChecked(NewPipeSettings.useStorageAccessFramework(ctx));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            prefUseSaf.setEnabled(false);
-            prefUseSaf.setSummary(R.string.downloads_storage_use_saf_summary_api_29);
-            prefStorageAsk.setSummary(R.string.downloads_storage_ask_summary_no_saf_notice);
+        if (prefUseSaf != null) {
+            prefUseSaf.setChecked(NewPipeSettings.useStorageAccessFramework(ctx));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                prefUseSaf.setEnabled(false);
+                prefUseSaf.setSummary(R.string.downloads_storage_use_saf_summary_api_29);
+            }
+        }
+        if (prefStorageAsk != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                prefStorageAsk.setSummary(R.string.downloads_storage_ask_summary_no_saf_notice);
+            }
+            prefStorageAsk.setOnPreferenceChangeListener((preference, value) -> {
+                updatePathPickers(!(boolean) value);
+                return true;
+            });
         }
 
         updatePreferencesSummary();
@@ -74,11 +84,6 @@ public class DownloadSettingsFragment extends BasePreferenceFragment {
                 || hasInvalidPath(downloadPathAudioPreference)) {
             updatePreferencesSummary();
         }
-
-        prefStorageAsk.setOnPreferenceChangeListener((preference, value) -> {
-            updatePathPickers(!(boolean) value);
-            return true;
-        });
     }
 
     @Override
@@ -91,18 +96,27 @@ public class DownloadSettingsFragment extends BasePreferenceFragment {
     public void onDetach() {
         super.onDetach();
         ctx = null;
-        prefStorageAsk.setOnPreferenceChangeListener(null);
+        if (prefStorageAsk != null) {
+            prefStorageAsk.setOnPreferenceChangeListener(null);
+        }
     }
 
     private void updatePreferencesSummary() {
-        showPathInSummary(downloadPathVideoPreference, R.string.download_path_summary,
-                prefPathVideo);
-        showPathInSummary(downloadPathAudioPreference, R.string.download_path_audio_summary,
-                prefPathAudio);
+        if (prefPathVideo != null) {
+            showPathInSummary(downloadPathVideoPreference, R.string.download_path_summary,
+                    prefPathVideo);
+        }
+        if (prefPathAudio != null) {
+            showPathInSummary(downloadPathAudioPreference, R.string.download_path_audio_summary,
+                    prefPathAudio);
+        }
     }
 
     private void showPathInSummary(final String prefKey, @StringRes final int defaultString,
                                    final Preference target) {
+        if (target == null) {
+            return;
+        }
         final Uri uri = Uri.parse(defaultPreferences.getString(prefKey, ""));
         if (uri.equals(Uri.EMPTY)) {
             target.setSummary(getString(defaultString));
@@ -124,8 +138,12 @@ public class DownloadSettingsFragment extends BasePreferenceFragment {
     }
 
     private void updatePathPickers(final boolean enabled) {
-        prefPathVideo.setEnabled(enabled);
-        prefPathAudio.setEnabled(enabled);
+        if (prefPathVideo != null) {
+            prefPathVideo.setEnabled(enabled);
+        }
+        if (prefPathAudio != null) {
+            prefPathAudio.setEnabled(enabled);
+        }
     }
 
     // FIXME: after releasing the old path, all downloads created on the folder becomes inaccessible

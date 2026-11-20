@@ -85,9 +85,7 @@ public final class ThemeHelper {
         final String selectedThemeKey = getSelectedThemeKey(context);
         final Resources res = context.getResources();
 
-        return selectedThemeKey.equals(res.getString(R.string.light_theme_key))
-                || (selectedThemeKey.equals(res.getString(R.string.auto_device_theme_key))
-                && !isDeviceDarkThemeEnabled(context));
+        return selectedThemeKey.equals(res.getString(R.string.light_theme_key));
     }
 
     /**
@@ -125,31 +123,13 @@ public final class ThemeHelper {
     public static int getThemeForService(final Context context, final int serviceId) {
         final Resources res = context.getResources();
         final String lightThemeKey = res.getString(R.string.light_theme_key);
-        final String blackThemeKey = res.getString(R.string.black_theme_key);
-        final String automaticDeviceThemeKey = res.getString(R.string.auto_device_theme_key);
-
         final String selectedThemeKey = getSelectedThemeKey(context);
 
-
-        int baseTheme = R.style.DarkTheme; // default to dark theme
+        int baseTheme = R.style.BlackTheme; // default to black theme
         if (selectedThemeKey.equals(lightThemeKey)) {
             baseTheme = R.style.LightTheme;
-        } else if (selectedThemeKey.equals(blackThemeKey)) {
+        } else {
             baseTheme = R.style.BlackTheme;
-        } else if (selectedThemeKey.equals(automaticDeviceThemeKey)) {
-
-            if (isDeviceDarkThemeEnabled(context)) {
-                // use the dark theme variant preferred by the user
-                final String selectedNightThemeKey = getSelectedNightThemeKey(context);
-                if (selectedNightThemeKey.equals(blackThemeKey)) {
-                    baseTheme = R.style.BlackTheme;
-                } else {
-                    baseTheme = R.style.DarkTheme;
-                }
-            } else {
-                // there is only one day theme
-                baseTheme = R.style.LightTheme;
-            }
         }
 
         if (serviceId <= -1) {
@@ -163,10 +143,10 @@ public final class ThemeHelper {
             return baseTheme;
         }
 
-        String themeName = "DarkTheme"; // default
+        String themeName = "BlackTheme"; // default
         if (baseTheme == R.style.LightTheme) {
             themeName = "LightTheme";
-        } else if (baseTheme == R.style.BlackTheme) {
+        } else {
             themeName = "BlackTheme";
         }
 
@@ -183,32 +163,13 @@ public final class ThemeHelper {
     public static int getSettingsThemeStyle(final Context context) {
         final Resources res = context.getResources();
         final String lightTheme = res.getString(R.string.light_theme_key);
-        final String blackTheme = res.getString(R.string.black_theme_key);
-        final String automaticDeviceTheme = res.getString(R.string.auto_device_theme_key);
-
-
         final String selectedTheme = getSelectedThemeKey(context);
 
         if (selectedTheme.equals(lightTheme)) {
             return R.style.LightSettingsTheme;
-        } else if (selectedTheme.equals(blackTheme)) {
-            return R.style.BlackSettingsTheme;
-        } else if (selectedTheme.equals(automaticDeviceTheme)) {
-            if (isDeviceDarkThemeEnabled(context)) {
-                // use the dark theme variant preferred by the user
-                final String selectedNightTheme = getSelectedNightThemeKey(context);
-                if (selectedNightTheme.equals(blackTheme)) {
-                    return R.style.BlackSettingsTheme;
-                } else {
-                    return R.style.DarkSettingsTheme;
-                }
-            } else {
-                // there is only one day theme
-                return R.style.LightSettingsTheme;
-            }
         } else {
-            // default to dark theme
-            return R.style.DarkSettingsTheme;
+            // default to black theme
+            return R.style.BlackSettingsTheme;
         }
     }
 
@@ -324,24 +285,20 @@ public final class ThemeHelper {
 
         if (selectedThemeKey.equals(res.getString(R.string.light_theme_key))) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        } else if (selectedThemeKey.equals(res.getString(R.string.dark_theme_key))
-                || selectedThemeKey.equals(res.getString(R.string.black_theme_key))) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
     }
 
     /**
-     * Returns whether the grid layout or the list layout should be used. If the user set "auto"
-     * mode in settings, decides based on screen orientation (landscape) and size.
+     * Returns whether the grid layout or the list layout should be used.
+     * Always returns false to force card mode.
      *
      * @param context the context to use
-     * @return true:use grid layout, false:use list layout
+     * @return false
      */
     public static boolean shouldUseGridLayout(final Context context) {
-        final ItemViewMode mode = getItemViewMode(context);
-        return mode == ItemViewMode.GRID;
+        return false;
     }
 
     /**
@@ -356,33 +313,12 @@ public final class ThemeHelper {
     }
 
     /**
-     * Returns item view mode.
+     * Returns item view mode. Always returns ItemViewMode.CARD.
      * @param context to read preference and parse string
-     * @return Returns one of ItemViewMode
+     * @return ItemViewMode.CARD
      */
     public static ItemViewMode getItemViewMode(final Context context) {
-        final String listMode = PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.getString(R.string.list_view_mode_key),
-                        context.getString(R.string.list_view_mode_card_key));
-        final ItemViewMode result;
-        if (listMode.equals(context.getString(R.string.list_view_mode_list_key))) {
-            result = ItemViewMode.CARD;
-        } else if (listMode.equals(context.getString(R.string.list_view_mode_grid_key))) {
-            result = ItemViewMode.GRID;
-        } else if (listMode.equals(context.getString(R.string.list_view_mode_card_key))) {
-            result = ItemViewMode.CARD;
-        } else {
-            // Auto mode - evaluate whether to use Grid based on screen real estate.
-            final Configuration configuration = context.getResources().getConfiguration();
-            final boolean useGrid = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                    && configuration.isLayoutSizeAtLeast(Configuration.SCREENLAYOUT_SIZE_LARGE);
-            if (useGrid) {
-                result = ItemViewMode.GRID;
-            } else {
-                result = ItemViewMode.CARD;
-            }
-        }
-        return result;
+        return ItemViewMode.CARD;
     }
 
     /**

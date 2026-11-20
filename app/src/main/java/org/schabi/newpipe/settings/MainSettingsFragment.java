@@ -30,10 +30,11 @@ public class MainSettingsFragment extends BasePreferenceFragment {
             defaultPreferences.edit().putBoolean(getString(R.string.update_app_key), false).apply();
         }
 
-        // Hide debug preferences in RELEASE build variant
-        if (!DEBUG) {
-            getPreferenceScreen().removePreference(
-                    requirePreference(R.string.debug_pref_screen_key));
+        // Hide debug preferences if present
+        final androidx.preference.Preference debugPref =
+                findPreference(getString(R.string.debug_pref_screen_key));
+        if (debugPref != null) {
+            getPreferenceScreen().removePreference(debugPref);
         }
     }
 
