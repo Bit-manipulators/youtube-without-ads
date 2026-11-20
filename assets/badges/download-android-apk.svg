@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="164" viewBox="0 0 560 164">
+  <defs>
+    <linearGradient id="badgeBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8E8E93"/>
+      <stop offset="100%" stop-color="#3A3A3C"/>
+    </linearGradient>
+    <linearGradient id="badgeBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#141416"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Rounded Rectangle -->
+  <rect x="2" y="2" width="556" height="160" rx="24" ry="24" fill="url(#badgeBg)" stroke="url(#badgeBorder)" stroke-width="4"/>
+
+  <!-- Left: Android Logo -->
+  <g transform="translate(68, 38) scale(1.4)">
+    <!-- Antennas -->
+    <line x1="14" y1="12" x2="8" y2="4" stroke="#3DDC84" stroke-width="3" stroke-linecap="round"/>
+    <line x1="36" y1="12" x2="42" y2="4" stroke="#3DDC84" stroke-width="3" stroke-linecap="round"/>
+    <!-- Head -->
+    <path d="M 10 24 A 15 15 0 0 1 40 24 Z" fill="#3DDC84"/>
+    <!-- Eyes -->
+    <circle cx="19" cy="18" r="2.2" fill="#000000"/>
+    <circle cx="31" cy="18" r="2.2" fill="#000000"/>
+    <!-- Body -->
+    <path d="M 10 27 L 10 52 A 4 4 0 0 0 14 56 L 36 56 A 4 4 0 0 0 40 52 L 40 27 Z" fill="#3DDC84"/>
+    <!-- Arms -->
+    <rect x="4" y="28" width="4" height="20" rx="2" fill="#3DDC84"/>
+    <rect x="42" y="28" width="4" height="20" rx="2" fill="#3DDC84"/>
+    <!-- Legs -->
+    <rect x="16" y="56" width="4.5" height="12" rx="2" fill="#3DDC84"/>
+    <rect x="29.5" y="56" width="4.5" height="12" rx="2" fill="#3DDC84"/>
+  </g>
+
+  <!-- Right: Texts -->
+  <!-- Line 1: Subtitle -->
+  <text x="175" y="58" fill="#B0B0B8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" letter-spacing="3.5">DIRECT DOWNLOAD</text>
+
+  <!-- Line 2: Title -->
+  <text x="175" y="118" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="54" font-weight="800">Android APK</text>
+
+  <!-- Version chip -->
+  <rect x="450" y="40" width="76" height="30" rx="8" fill="#E62117"/>
+  <text x="488" y="60" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" text-anchor="middle">v4.7</text>
+</svg>
