@@ -12,14 +12,14 @@
 <br/>
 
 <!-- BIG DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.4.apk">
-  <img src="https://img.shields.io/badge/⬇️_DOWNLOAD_LATEST_BUILD-AdFreeYT_v4.4.apk-E62117?style=for-the-badge&logo=android&logoColor=white&labelColor=1F1F1F" height="60" alt="Download Latest APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.5.apk">
+  <img src="https://img.shields.io/badge/⬇️_DOWNLOAD_LATEST_BUILD-AdFreeYT_v4.5.apk-E62117?style=for-the-badge&logo=android&logoColor=white&labelColor=1F1F1F" height="60" alt="Download Latest APK"/>
 </a>
 
 <br/>
 <br/>
 
-[![Direct APK Download](https://img.shields.io/badge/Direct_APK_Mirror-v4.4-333333?style=flat-square&logo=download)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.4.apk)
+[![Direct APK Download](https://img.shields.io/badge/Direct_APK_Mirror-v4.5-333333?style=flat-square&logo=download)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.5.apk)
 [![All Releases](https://img.shields.io/badge/All_Releases_%26_Changelog-GitHub-grey?style=flat-square&logo=git)](https://github.com/Bit-manipulators/youtube-without-ads/releases)
 
 <p align="center">
@@ -112,8 +112,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.4.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_v4.4.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.5.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_v4.5.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -122,10 +122,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_v4.4.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.4.apk
+curl -L -o AdFreeYT_v4.5.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.5.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_v4.4.apk
+termux-open AdFreeYT_v4.5.apk
 ```
 
 ---

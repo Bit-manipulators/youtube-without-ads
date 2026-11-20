@@ -53,6 +53,9 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
@@ -175,6 +178,43 @@ public final class VideoDetailFragment
     final List<Integer> tabContentDescriptions = new ArrayList<>();
     private boolean tabSettingsChanged = false;
     private int lastAppBarVerticalOffset = Integer.MAX_VALUE; // prevents useless updates
+    private int statusBarTopInset = 0;
+    private int navBarBottomInset = 0;
+
+    public int getStatusBarTopInset() {
+        if (statusBarTopInset > 0) {
+            return statusBarTopInset;
+        }
+        if (activity instanceof MainActivity) {
+            final int h = ((MainActivity) activity).getStatusBarHeight();
+            if (h > 0) {
+                return h;
+            }
+        }
+        if (getContext() != null) {
+            final int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resId > 0) {
+                return getResources().getDimensionPixelSize(resId);
+            }
+        }
+        return 0;
+    }
+
+    public void updateLayoutInsets() {
+        if (binding == null || binding.detailRootLinearLayout == null) {
+            return;
+        }
+        try {
+            if (isFullscreen()) {
+                binding.detailRootLinearLayout.setPadding(0, 0, 0, 0);
+            } else {
+                final int topInset = getStatusBarTopInset();
+                binding.detailRootLinearLayout.setPadding(0, topInset, 0, navBarBottomInset);
+            }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error updating layout insets", e);
+        }
+    }
 
     private final SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener =
             (sharedPreferences, key) -> {
@@ -640,12 +680,30 @@ public final class VideoDetailFragment
                         : View.GONE
         );
         accommodateForTvAndDesktopMode();
+        updateLayoutInsets();
     }
 
     @Override
     @SuppressLint("ClickableViewAccessibility")
     protected void initListeners() {
         super.initListeners();
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
+            try {
+                final Insets status = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                final Insets nav = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                if (status != null && status.top > 0) {
+                    statusBarTopInset = status.top;
+                }
+                if (nav != null && nav.bottom > 0) {
+                    navBarBottomInset = nav.bottom;
+                }
+                updateLayoutInsets();
+            } catch (final Exception e) {
+                Log.e(TAG, "Error in setOnApplyWindowInsetsListener", e);
+            }
+            return windowInsets;
+        });
 
         // Workaround for #5600
         // Forcefully catch click events uncaught by children because otherwise
@@ -1112,10 +1170,17 @@ public final class VideoDetailFragment
         if (playerRootView.getParent() instanceof ViewGroup) {
             ((ViewGroup) playerRootView.getParent()).removeView(playerRootView);
         }
-        if (binding != null && binding.playerPlaceholder != null) {
-            binding.playerPlaceholder.addView(playerRootView);
-            playerUi.setupVideoSurfaceIfNeeded();
+        try {
+            if (binding != null && binding.playerPlaceholder != null) {
+                if (binding.playerPlaceholder.indexOfChild(playerRootView) < 0) {
+                    binding.playerPlaceholder.addView(playerRootView);
+                }
+                playerUi.setupVideoSurfaceIfNeeded();
+            }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error attaching player view from floating", e);
         }
+        updateLayoutInsets();
     }
 
     public void togglePlayPause() {
@@ -1319,17 +1384,21 @@ public final class VideoDetailFragment
 
             player.UIs().get(MainPlayerUi.class).ifPresent(playerUi -> {
                 // sometimes binding would be null here, even though getView() != null above u.u
-                if (binding != null) {
-                    // Only reparent the view if it's not already in the playerPlaceholder.
-                    // Removing and re-adding a SurfaceView destroys its native surface,
-                    // causing a black screen until the video decoder hits the next
-                    // keyframe (2-5 seconds on typical DASH/HLS streams).
-                    if (playerUi.getBinding().getRoot().getParent()
-                            != binding.playerPlaceholder) {
-                        playerUi.removeViewFromParent();
-                        binding.playerPlaceholder.addView(playerUi.getBinding().getRoot());
+                if (binding != null && binding.playerPlaceholder != null) {
+                    try {
+                        final View playerRootView = playerUi.getBinding().getRoot();
+                        if (playerRootView.getParent() != binding.playerPlaceholder) {
+                            if (playerRootView.getParent() instanceof ViewGroup) {
+                                ((ViewGroup) playerRootView.getParent()).removeView(playerRootView);
+                            }
+                            if (binding.playerPlaceholder.indexOfChild(playerRootView) < 0) {
+                                binding.playerPlaceholder.addView(playerRootView);
+                            }
+                        }
+                        playerUi.setupVideoSurfaceIfNeeded();
+                    } catch (final Exception e) {
+                        Log.e(TAG, "Error adding player view in tryAddVideoPlayerView", e);
                     }
-                    playerUi.setupVideoSurfaceIfNeeded();
                 }
             });
         });
@@ -1397,6 +1466,7 @@ public final class VideoDetailFragment
                     : metrics.heightPixels / 2.0f);
             setHeightThumbnail(height, metrics);
         }
+        updateLayoutInsets();
     }
 
     private void setHeightThumbnail(final int newHeight, final DisplayMetrics metrics) {
@@ -1968,6 +2038,7 @@ public final class VideoDetailFragment
         }
         scrollToTop();
 
+        updateLayoutInsets();
         tryAddVideoPlayerView();
     }
 
@@ -2032,8 +2103,12 @@ public final class VideoDetailFragment
         }
         activity.getWindow().getDecorView().setSystemUiVisibility(0);
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        activity.getWindow().setStatusBarColor(Color.TRANSPARENT);
-        activity.getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).applyTransparentSystemBars();
+        } else {
+            activity.getWindow().setStatusBarColor(MainActivity.STATUS_BAR_COLOR_70_TRANSPARENT);
+            activity.getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        }
     }
 
     private void hideSystemUi() {

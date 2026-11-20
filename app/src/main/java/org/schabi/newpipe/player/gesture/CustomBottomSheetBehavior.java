@@ -3,6 +3,7 @@ package org.schabi.newpipe.player.gesture;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -18,6 +19,7 @@ import org.schabi.newpipe.R;
 import java.util.List;
 
 public class CustomBottomSheetBehavior extends BottomSheetBehavior<FrameLayout> {
+    private static final String TAG = "CustomBottomSheetBehavior";
 
     public CustomBottomSheetBehavior(@NonNull final Context context,
                                      @Nullable final AttributeSet attrs) {
@@ -35,45 +37,52 @@ public class CustomBottomSheetBehavior extends BottomSheetBehavior<FrameLayout> 
     public boolean onInterceptTouchEvent(@NonNull final CoordinatorLayout parent,
                                          @NonNull final FrameLayout child,
                                          @NonNull final MotionEvent event) {
-        // Drop following when action ends
-        if (event.getAction() == MotionEvent.ACTION_CANCEL
-                || event.getAction() == MotionEvent.ACTION_UP) {
-            skippingInterception = false;
-        }
+        try {
+            // Drop following when action ends
+            if (event.getAction() == MotionEvent.ACTION_CANCEL
+                    || event.getAction() == MotionEvent.ACTION_UP) {
+                skippingInterception = false;
+            }
 
-        // Found that user still swiping, continue following
-        if (skippingInterception || getState() == BottomSheetBehavior.STATE_SETTLING) {
-            return false;
-        }
+            // Found that user still swiping, continue following
+            if (skippingInterception || getState() == BottomSheetBehavior.STATE_SETTLING) {
+                return false;
+            }
 
-        // Skip collapsed state so bottom sheet minimizes directly to popup / hidden
-        setSkipCollapsed(true);
+            // Skip collapsed state so bottom sheet minimizes directly to popup / hidden
+            setSkipCollapsed(true);
 
-        // Don't need to do anything if bottomSheet isn't expanded
-        if (getState() == BottomSheetBehavior.STATE_EXPANDED
-                && event.getAction() == MotionEvent.ACTION_DOWN) {
-            // Without overriding scrolling will not work when user touches these elements
-            for (final int element : skipInterceptionOfElements) {
-                final View view = child.findViewById(element);
-                if (view != null) {
-                    final boolean visible = view.getGlobalVisibleRect(globalRect);
-                    if (visible
-                            && globalRect.contains((int) event.getRawX(), (int) event.getRawY())) {
-                        // Makes bottom part of the player draggable in portrait when
-                        // playbackControlRoot is hidden
-                        if (element == R.id.bottomControls
-                                && child.findViewById(R.id.playbackControlRoot)
-                                .getVisibility() != View.VISIBLE) {
-                            return super.onInterceptTouchEvent(parent, child, event);
+            // Don't need to do anything if bottomSheet isn't expanded
+            if (getState() == BottomSheetBehavior.STATE_EXPANDED
+                    && event.getAction() == MotionEvent.ACTION_DOWN) {
+                // Without overriding scrolling will not work when user touches these elements
+                for (final int element : skipInterceptionOfElements) {
+                    final View view = child.findViewById(element);
+                    if (view != null) {
+                        final boolean visible = view.getGlobalVisibleRect(globalRect);
+                        if (visible
+                                && globalRect.contains((int) event.getRawX(), (int) event.getRawY())) {
+                            // Makes bottom part of the player draggable in portrait when
+                            // playbackControlRoot is hidden
+                            if (element == R.id.bottomControls) {
+                                final View playbackControls = child.findViewById(R.id.playbackControlRoot);
+                                if (playbackControls != null
+                                        && playbackControls.getVisibility() != View.VISIBLE) {
+                                    return super.onInterceptTouchEvent(parent, child, event);
+                                }
+                            }
+                            skippingInterception = true;
+                            return false;
                         }
-                        skippingInterception = true;
-                        return false;
                     }
                 }
             }
-        }
 
-        return super.onInterceptTouchEvent(parent, child, event);
+            return super.onInterceptTouchEvent(parent, child, event);
+        } catch (final Exception e) {
+            Log.e(TAG, "Error in onInterceptTouchEvent", e);
+            return false;
+        }
     }
 
 }

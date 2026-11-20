@@ -185,9 +185,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(mainBinding.getRoot());
 
         ViewCompat.setOnApplyWindowInsetsListener(mainBinding.getRoot(), (v, windowInsets) -> {
-            final Insets statusInsets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
-            if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
-                toolbarLayoutBinding.getRoot().setPadding(0, statusInsets.top, 0, 0);
+            try {
+                final Insets statusInsets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                if (statusInsets != null && statusInsets.top > 0) {
+                    statusBarHeight = statusInsets.top;
+                }
+                if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
+                    toolbarLayoutBinding.getRoot().setPadding(0, statusBarHeight, 0, 0);
+                }
+            } catch (final Exception e) {
+                Log.e(TAG, "Error applying window insets", e);
             }
             return windowInsets;
         });
@@ -220,45 +227,56 @@ public class MainActivity extends AppCompatActivity {
         openMiniPlayerUponPlayerStarted();
         setupFloatingPlayer();
 
-        final BottomSheetBehavior<FragmentContainerView> playerBottomSheetBehavior =
-                BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
-        playerBottomSheetBehavior.addBottomSheetCallback(
-                new BottomSheetBehavior.BottomSheetCallback() {
-                    @Override
-                    public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
-                        if (newState == BottomSheetBehavior.STATE_EXPANDED) {
-                            setBarsVisible(false);
-                        } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
-                                || newState == BottomSheetBehavior.STATE_HIDDEN) {
-                            final Fragment fragment = getSupportFragmentManager()
-                                    .findFragmentById(R.id.fragment_holder);
-                            if (fragment instanceof MainFragment) {
-                                final View bottomBar = ((MainFragment) fragment).getBottomBar();
-                                if (bottomBar != null) {
-                                    bottomBar.setTranslationY(0f);
+        try {
+            final BottomSheetBehavior<FragmentContainerView> playerBottomSheetBehavior =
+                    BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
+            playerBottomSheetBehavior.addBottomSheetCallback(
+                    new BottomSheetBehavior.BottomSheetCallback() {
+                        @Override
+                        public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
+                            if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                                setBarsVisible(false);
+                            } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
+                                    || newState == BottomSheetBehavior.STATE_HIDDEN) {
+                                final Fragment fragment = getSupportFragmentManager()
+                                        .findFragmentById(R.id.fragment_holder);
+                                if (fragment instanceof MainFragment) {
+                                    final View bottomBar = ((MainFragment) fragment).getBottomBar();
+                                    if (bottomBar != null) {
+                                        bottomBar.setTranslationY(0f);
+                                    }
                                 }
+                                setBarsVisible(true);
                             }
-                            setBarsVisible(true);
                         }
-                    }
 
-                    @Override
-                    public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {
-                        final Fragment fragment = getSupportFragmentManager()
-                                .findFragmentById(R.id.fragment_holder);
-                        if (fragment instanceof MainFragment) {
-                            final View bottomBar = ((MainFragment) fragment).getBottomBar();
-                            if (bottomBar != null && slideOffset >= 0) {
-                                final int bottomHeight = bottomBar.getHeight() > 0
-                                        ? bottomBar.getHeight()
-                                        : (int) android.util.TypedValue.applyDimension(
-                                                android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
-                                                getResources().getDisplayMetrics());
-                                bottomBar.setTranslationY(bottomHeight * slideOffset);
+                        @Override
+                        public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {
+                            try {
+                                if (Float.isNaN(slideOffset) || Float.isInfinite(slideOffset)) {
+                                    return;
+                                }
+                                final Fragment fragment = getSupportFragmentManager()
+                                        .findFragmentById(R.id.fragment_holder);
+                                if (fragment instanceof MainFragment) {
+                                    final View bottomBar = ((MainFragment) fragment).getBottomBar();
+                                    if (bottomBar != null && slideOffset >= 0) {
+                                        final int bottomHeight = bottomBar.getHeight() > 0
+                                                ? bottomBar.getHeight()
+                                                : (int) android.util.TypedValue.applyDimension(
+                                                        android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
+                                                        getResources().getDisplayMetrics());
+                                        bottomBar.setTranslationY(bottomHeight * slideOffset);
+                                    }
+                                }
+                            } catch (final Exception e) {
+                                Log.e(TAG, "Error in bottom sheet onSlide", e);
                             }
                         }
-                    }
-                });
+                    });
+        } catch (final Exception e) {
+            Log.e(TAG, "Error setting up player bottom sheet callback", e);
+        }
 
         if (PermissionHelper.checkPostNotificationsPermission(this,
                 PermissionHelper.POST_NOTIFICATIONS_REQUEST_CODE)) {
@@ -556,6 +574,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        floatingControlsHandler.removeCallbacksAndMessages(null);
         if (!isChangingConfigurations()) {
             StateSaver.clearStateFiles();
         }
@@ -995,21 +1014,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void applyTransparentSystemBars() {
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
-        getWindow().setNavigationBarColor(Color.TRANSPARENT);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            getWindow().setStatusBarContrastEnforced(false);
-            getWindow().setNavigationBarContrastEnforced(false);
-        }
+    public static final int STATUS_BAR_COLOR_70_TRANSPARENT = Color.argb(0x4D, 0x00, 0x00, 0x00);
+    private int statusBarHeight = 0;
 
-        final WindowInsetsControllerCompat insetsController =
-                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        if (insetsController != null) {
-            final boolean isLight = ThemeHelper.isLightThemeSelected(this);
-            insetsController.setAppearanceLightStatusBars(isLight);
-            insetsController.setAppearanceLightNavigationBars(isLight);
+    public int getStatusBarHeight() {
+        if (statusBarHeight > 0) {
+            return statusBarHeight;
+        }
+        final int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        return resId > 0 ? getResources().getDimensionPixelSize(resId) : 0;
+    }
+
+    public void applyTransparentSystemBars() {
+        try {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            getWindow().setStatusBarColor(STATUS_BAR_COLOR_70_TRANSPARENT);
+            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                getWindow().setStatusBarContrastEnforced(false);
+                getWindow().setNavigationBarContrastEnforced(false);
+            }
+
+            final WindowInsetsControllerCompat insetsController =
+                    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (insetsController != null) {
+                final boolean isLight = ThemeHelper.isLightThemeSelected(this);
+                insetsController.setAppearanceLightStatusBars(isLight);
+                insetsController.setAppearanceLightNavigationBars(isLight);
+            }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error applying transparent system bars", e);
         }
     }
 
@@ -1204,43 +1238,66 @@ public class MainActivity extends AppCompatActivity {
         mainBinding.inAppFloatingPlayer.setVisibility(View.VISIBLE);
 
         // Hide the full bottom sheet
-        final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
-                BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        try {
+            final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
+                    BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        } catch (final Exception e) {
+            Log.e(TAG, "Error hiding bottom sheet", e);
+        }
 
         setBarsVisible(true);
 
-        final View playerView = detailFragment.detachPlayerViewForFloating();
-        if (playerView != null) {
-            if (playerView.getParent() instanceof ViewGroup) {
-                ((ViewGroup) playerView.getParent()).removeView(playerView);
+        try {
+            final View playerView = detailFragment.detachPlayerViewForFloating();
+            if (playerView != null) {
+                if (playerView.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) playerView.getParent()).removeView(playerView);
+                }
+                mainBinding.floatingPlayerContainer.removeAllViews();
+                mainBinding.floatingPlayerContainer.addView(playerView);
+                updateFloatingPlayerPlayPauseButton();
+                showFloatingPlayerControls();
+            } else {
+                isFloatingPlayerActive = false;
+                mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
             }
-            mainBinding.floatingPlayerContainer.removeAllViews();
-            mainBinding.floatingPlayerContainer.addView(playerView);
-            updateFloatingPlayerPlayPauseButton();
-            showFloatingPlayerControls();
-        } else {
+        } catch (final Exception e) {
+            Log.e(TAG, "Error detaching/attaching player view for floating", e);
             isFloatingPlayerActive = false;
-            mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+            if (mainBinding != null && mainBinding.inAppFloatingPlayer != null) {
+                mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+            }
         }
     }
 
     public void expandFromFloatingPlayer() {
         floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
         isFloatingPlayerActive = false;
-        mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
-        mainBinding.floatingPlayerContainer.removeAllViews();
-
-        final Fragment fragmentPlayer = getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_player_holder);
-        if (fragmentPlayer instanceof VideoDetailFragment) {
-            final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
-            detailFragment.attachPlayerViewFromFloating();
+        if (mainBinding != null) {
+            mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+            mainBinding.floatingPlayerContainer.removeAllViews();
         }
 
-        final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
-                BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        try {
+            final Fragment fragmentPlayer = getSupportFragmentManager()
+                    .findFragmentById(R.id.fragment_player_holder);
+            if (fragmentPlayer instanceof VideoDetailFragment) {
+                final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+                detailFragment.attachPlayerViewFromFloating();
+                detailFragment.updateLayoutInsets();
+            }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error attaching player view on expand", e);
+        }
+
+        try {
+            final BottomSheetBehavior<FragmentContainerView> bottomSheetBehavior =
+                    BottomSheetBehavior.from(mainBinding.fragmentPlayerHolder);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        } catch (final Exception e) {
+            Log.e(TAG, "Error expanding bottom sheet", e);
+        }
         setBarsVisible(false);
     }
 
@@ -1248,12 +1305,20 @@ public class MainActivity extends AppCompatActivity {
         if (isFloatingPlayerActive()) {
             floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
             isFloatingPlayerActive = false;
-            mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
-            mainBinding.floatingPlayerContainer.removeAllViews();
-            final Fragment fragmentPlayer = getSupportFragmentManager()
-                    .findFragmentById(R.id.fragment_player_holder);
-            if (fragmentPlayer instanceof VideoDetailFragment) {
-                ((VideoDetailFragment) fragmentPlayer).attachPlayerViewFromFloating();
+            if (mainBinding != null) {
+                mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+                mainBinding.floatingPlayerContainer.removeAllViews();
+            }
+            try {
+                final Fragment fragmentPlayer = getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_player_holder);
+                if (fragmentPlayer instanceof VideoDetailFragment) {
+                    final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+                    detailFragment.attachPlayerViewFromFloating();
+                    detailFragment.updateLayoutInsets();
+                }
+            } catch (final Exception e) {
+                Log.e(TAG, "Error attaching player view on expanding", e);
             }
         }
     }
@@ -1261,17 +1326,27 @@ public class MainActivity extends AppCompatActivity {
     public void closeFloatingPlayer() {
         floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
         isFloatingPlayerActive = false;
-        mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
-        mainBinding.floatingPlayerContainer.removeAllViews();
-
-        final Fragment fragmentPlayer = getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_player_holder);
-        if (fragmentPlayer instanceof VideoDetailFragment) {
-            final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
-            detailFragment.attachPlayerViewFromFloating();
-            detailFragment.cleanUp();
+        if (mainBinding != null) {
+            mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
+            mainBinding.floatingPlayerContainer.removeAllViews();
         }
-        PlayerHolder.getInstance().stopService();
+
+        try {
+            final Fragment fragmentPlayer = getSupportFragmentManager()
+                    .findFragmentById(R.id.fragment_player_holder);
+            if (fragmentPlayer instanceof VideoDetailFragment) {
+                final VideoDetailFragment detailFragment = (VideoDetailFragment) fragmentPlayer;
+                detailFragment.cleanUp();
+            }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error cleaning up detail fragment on close", e);
+        }
+
+        try {
+            PlayerHolder.getInstance().stopService();
+        } catch (final Exception e) {
+            Log.e(TAG, "Error stopping player service", e);
+        }
     }
 
     public void toggleFloatingPlayerPlayPause() {

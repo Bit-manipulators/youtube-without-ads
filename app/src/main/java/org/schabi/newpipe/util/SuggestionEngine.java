@@ -67,34 +67,37 @@ public final class SuggestionEngine {
         if (item == null) {
             return false;
         }
-
-        final StreamType streamType = item.getStreamType();
-        if (StreamTypeUtil.isLiveStream(streamType)) {
-            return true;
-        }
-
-        if (streamType == StreamType.LIVE_STREAM
-                || streamType == StreamType.AUDIO_LIVE_STREAM
-                || streamType == StreamType.POST_LIVE_STREAM) {
-            return true;
-        }
-
-        if (item.getDuration() <= 0) {
-            return true;
-        }
-
-        final String name = item.getName();
-        if (!TextUtils.isEmpty(name)) {
-            final String lower = name.toLowerCase();
-            if (lower.contains(" live ") || lower.startsWith("live ") || lower.endsWith(" live")
-                    || lower.contains("livestream") || lower.contains("live stream")
-                    || lower.contains("🔴") || name.contains("सीधा LIVE")
-                    || name.contains("LIVE|")) {
+        try {
+            final StreamType streamType = item.getStreamType();
+            if (StreamTypeUtil.isLiveStream(streamType)) {
                 return true;
             }
-        }
 
-        return false;
+            if (streamType == StreamType.LIVE_STREAM
+                    || streamType == StreamType.AUDIO_LIVE_STREAM
+                    || streamType == StreamType.POST_LIVE_STREAM) {
+                return true;
+            }
+
+            if (item.getDuration() <= 0) {
+                return true;
+            }
+
+            final String name = item.getName();
+            if (!TextUtils.isEmpty(name)) {
+                final String lower = name.toLowerCase();
+                if (lower.contains(" live ") || lower.startsWith("live ") || lower.endsWith(" live")
+                        || lower.contains("livestream") || lower.contains("live stream")
+                        || lower.contains("🔴") || name.contains("सीधा LIVE")
+                        || name.contains("LIVE|")) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (final Exception e) {
+            return false;
+        }
     }
 
     /**

@@ -41,6 +41,7 @@ public class DefaultKioskFragment extends KioskFragment {
         }
         pageCounter = 1;
         return SuggestionEngine.loadHomeFeed(serviceId, url, forceReload)
+                .onErrorResumeNext(throwable -> ExtractorHelper.getKioskInfo(serviceId, url, forceReload))
                 .map(kioskInfo -> {
                     if (!Page.isValid(kioskInfo.getNextPage())) {
                         kioskInfo.setNextPage(new Page("home_feed_page_" + pageCounter++));
@@ -54,7 +55,7 @@ public class DefaultKioskFragment extends KioskFragment {
         seenUrls.clear();
         if (result.getRelatedItems() != null) {
             for (final StreamInfoItem item : result.getRelatedItems()) {
-                if (item.getUrl() != null) {
+                if (item != null && item.getUrl() != null) {
                     seenUrls.add(item.getUrl());
                 }
             }
@@ -78,11 +79,14 @@ public class DefaultKioskFragment extends KioskFragment {
     private Single<ListExtractor.InfoItemsPage<StreamInfoItem>> fetchMoreHomeFeedItems() {
         final int nextPageNum = pageCounter++;
         return SuggestionEngine.fetchRandomVideos(serviceId, 12)
+                .onErrorReturnItem(Collections.emptyList())
                 .map(items -> {
                     final List<StreamInfoItem> uniqueItems = new ArrayList<>();
-                    for (final StreamInfoItem item : items) {
-                        if (item.getUrl() != null && seenUrls.add(item.getUrl())) {
-                            uniqueItems.add(item);
+                    if (items != null) {
+                        for (final StreamInfoItem item : items) {
+                            if (item != null && item.getUrl() != null && seenUrls.add(item.getUrl())) {
+                                uniqueItems.add(item);
+                            }
                         }
                     }
                     return new ListExtractor.InfoItemsPage<>(
