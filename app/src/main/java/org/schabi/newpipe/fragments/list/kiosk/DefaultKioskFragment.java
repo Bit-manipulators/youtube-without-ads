@@ -78,23 +78,13 @@ public class DefaultKioskFragment extends KioskFragment {
 
     private Single<ListExtractor.InfoItemsPage<StreamInfoItem>> fetchMoreHomeFeedItems() {
         final int nextPageNum = pageCounter++;
-        return SuggestionEngine.fetchRandomVideos(serviceId, 12)
+        return SuggestionEngine.fetchRecommendations(serviceId, seenUrls, 12)
                 .onErrorReturnItem(Collections.emptyList())
-                .map(items -> {
-                    final List<StreamInfoItem> uniqueItems = new ArrayList<>();
-                    if (items != null) {
-                        for (final StreamInfoItem item : items) {
-                            if (item != null && item.getUrl() != null && seenUrls.add(item.getUrl())) {
-                                uniqueItems.add(item);
-                            }
-                        }
-                    }
-                    return new ListExtractor.InfoItemsPage<>(
-                            uniqueItems,
-                            new Page("home_feed_page_" + nextPageNum),
-                            Collections.emptyList()
-                    );
-                });
+                .map(items -> new ListExtractor.InfoItemsPage<>(
+                        items != null ? items : Collections.emptyList(),
+                        new Page("home_feed_page_" + nextPageNum),
+                        Collections.emptyList()
+                ));
     }
 
     @Override

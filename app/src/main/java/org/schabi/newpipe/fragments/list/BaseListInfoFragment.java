@@ -178,13 +178,18 @@ public abstract class BaseListInfoFragment<I extends InfoItem, L extends ListInf
         currentWorker = loadMoreItemsLogic()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doFinally(this::allowDownwardFocusScroll)
+                .doFinally(() -> {
+                    isLoading.set(false);
+                    allowDownwardFocusScroll();
+                })
                 .subscribe(infoItemsPage -> {
                     isLoading.set(false);
                     handleNextItems(infoItemsPage);
-                }, (@NonNull Throwable throwable) ->
-                        dynamicallyShowErrorPanelOrSnackbar(new ErrorInfo(throwable,
-                                errorUserAction, "Loading more items: " + url, serviceId, url)));
+                }, (@NonNull Throwable throwable) -> {
+                    isLoading.set(false);
+                    dynamicallyShowErrorPanelOrSnackbar(new ErrorInfo(throwable,
+                            errorUserAction, "Loading more items: " + url, serviceId, url));
+                });
     }
 
     private void forbidDownwardFocusScroll() {

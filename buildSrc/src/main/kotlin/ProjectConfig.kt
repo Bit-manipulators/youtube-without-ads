@@ -13,3 +13,4 @@ const val NEWPIPE_VERSION_NAME = "0.29.3"
 
 const val NEWPIPE_APPLICATION_ID_OLD = "org.schabi.newpipe"
 const val NEWPIPE_APPLICATION_ID_NEW = "net.newpipe.app"
+const val ADFREEYT_APPLICATION_ID = "com.bitmanipulators.adfreeyt"

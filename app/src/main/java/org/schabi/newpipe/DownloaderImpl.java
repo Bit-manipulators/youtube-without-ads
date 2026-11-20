@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
+import org.schabi.newpipe.App;
 import org.schabi.newpipe.error.ReCaptchaActivity;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Request;
@@ -13,6 +14,7 @@ import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.util.InfoCache;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import okhttp3.Cache;
 import okhttp3.CompressionInterceptor;
 import okhttp3.Gzip;
 import okhttp3.OkHttpClient;
@@ -43,10 +46,28 @@ public final class DownloaderImpl extends Downloader {
     private final OkHttpClient client;
 
     private DownloaderImpl(final OkHttpClient.Builder builder) {
+        File cacheDir = null;
+        try {
+            if (App.getInstance() != null) {
+                final Context context = App.getInstance();
+                File baseDir = context.getExternalCacheDir();
+                if (baseDir == null || !baseDir.canWrite()) {
+                    baseDir = context.getCacheDir();
+                }
+                cacheDir = new File(baseDir, "okhttp");
+                if (!cacheDir.exists()) {
+                    cacheDir.mkdirs();
+                }
+            }
+        } catch (final Exception ignored) {
+        }
+
+        if (cacheDir != null) {
+            builder.cache(new Cache(cacheDir, 64L * 1024 * 1024));
+        }
+
         this.client = builder
                 .readTimeout(30, TimeUnit.SECONDS)
-//                .cache(new Cache(new File(context.getExternalCacheDir(), "okhttp"),
-//                        16 * 1024 * 1024))
                 .addInterceptor(new CompressionInterceptor(
                         Brotli.INSTANCE,
                         Gzip.INSTANCE))

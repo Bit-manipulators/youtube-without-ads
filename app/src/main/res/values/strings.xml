@@ -908,4 +908,16 @@
     <string name="api23_requirement_dialog_title">NewPipe is dropping support for Android 5</string>
     <string name="api23_requirement_dialog_message">Unfortunately NewPipe depends on a few libraries that dropped support for Android 5.0 and 5.1. The next NewPipe release will therefore only work on devices with Android 6 or higher, sadly. Read more in the blogpost.</string>
     <string name="api23_requirement_dialog_blogpost">Blogpost</string>
+
+    <!-- About Us -->
+    <string name="about_us_title">About Us</string>
+    <string name="about_us_summary">Learn more about Bit-manipulators and AdFreeYT</string>
+    <string name="about_app_category">Application</string>
+    <string name="about_app_summary">A fast, private, and completely ad-free YouTube experience for Android.</string>
+    <string name="about_organization_category">Organization &amp; Maintenance</string>
+    <string name="about_organization_title">Bit-manipulators Organization</string>
+    <string name="about_organization_summary">Open source community dedicated to building high-performance, ad-free and privacy-respecting tools.\nhttps://github.com/Bit-manipulators</string>
+    <string name="about_creator_title">Creator &amp; Maintainer</string>
+    <string name="about_creator_summary">Amit Padhan (@amitpadhan525)\nhttps://github.com/amitpadhan525</string>
+    <string name="about_github_title">Source Code &amp; Issues</string>
 </resources>

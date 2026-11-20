@@ -3,15 +3,15 @@
 # 🎬 AdFreeYT
 
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.7.apk">
-  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.7 APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk">
+  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.8 APK"/>
 </a>
 
 <br/>
 <br/>
 
 <!-- OFFICIAL STORE / GITHUB BADGES -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.7.apk">
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk">
   <img src="assets/badges/download-android-apk.svg" height="60" alt="Download Android APK"/>
 </a>
 &nbsp;&nbsp;
@@ -95,14 +95,18 @@
 
 ---
 
-## 🚀 What's New in v4.7
+## 🚀 What's New in v4.8
 
-- **Glassmorphism Acrylic Dock & Top Bar**: Modern translucent navigation dock with circular active tab indicator and acrylic search bar.
-- **Pure AMOLED Black Experience**: True deep black default styling with no gray tints for maximum battery savings on OLED screens.
-- **Fixed Search Insets**: Clean search suggestions list with zero overlap from the glass top search header.
-- **Crash Fixes & Direct Issue Reporting**: Automated crash diagnostics with direct GitHub issue submission and email support.
-- **Seamless Auto-Updates**: In-app new version notifications and seamless in-place updates with zero data loss.
-- **Simplified Settings & Smart Defaults**: Clutter-free settings with automatic Downloads directory handling.
+- **Smart Personalized Feed**: Recommendations dynamically tailored to your actual search and watch history with endless continuous scrolling.
+- **Instant Video Playback**: Low-latency startup buffer (250ms) eliminating video start buffering delays.
+- **Integrated High-Performance Cache**: Automatic OkHttp HTTP disk cache and Coil image caching for instant thumbnail and page loading.
+- **New "About Us" Settings**: Meet the Bit-manipulators organization and creator/maintainer Amit Padhan (@amitpadhan525).
+- **Brand Identity & App Package**: Official application ID updated to `com.bitmanipulators.adfreeyt`.
+- **UI & Layout Refinements**:
+  - Compact centered bottom dock with oval-shaped click ripple animations.
+  - Resolved top bar overlap on home feed with dynamic system window insets.
+  - Eliminated dead space between search bar and suggestions list.
+  - Elevated and bounded floating mini-player preventing dock overlap.
 
 ---
 
@@ -110,8 +114,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.7.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_v4.7.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_v4.8.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -120,10 +124,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_v4.7.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.7.apk
+curl -L -o AdFreeYT_v4.8.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_v4.7.apk
+termux-open AdFreeYT_v4.8.apk
 ```
 
 ---

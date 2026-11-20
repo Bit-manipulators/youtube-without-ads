@@ -319,7 +319,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         final ColorStateList tabColors = new ColorStateList(states, colors);
         tabLayout.setTabIconTint(tabColors);
         tabLayout.setTabTextColors(unselectedColor, selectedColor);
-        tabLayout.setTabRippleColor(ColorStateList.valueOf(selectedColor).withAlpha(24));
+        tabLayout.setTabRippleColor(null);
     }
 
     @Override

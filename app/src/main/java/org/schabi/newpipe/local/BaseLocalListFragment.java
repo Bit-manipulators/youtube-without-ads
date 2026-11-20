@@ -11,6 +11,8 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -157,11 +159,34 @@ public abstract class BaseLocalListFragment<I, N> extends BaseStateFragment<I>
 
     private void setupFrontPagePadding(final RecyclerView rv) {
         rv.setClipToPadding(false);
-        final int topPadding = (int) android.util.TypedValue.applyDimension(
-                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        final int sbHeight = (activity instanceof MainActivity)
+                ? ((MainActivity) activity).getStatusBarHeight()
+                : 0;
+        final int abHeight = (activity instanceof MainActivity)
+                ? ((MainActivity) activity).getActionBarHeight()
+                : (int) android.util.TypedValue.applyDimension(
+                        android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        final int topPadding = sbHeight + abHeight;
         final int bottomPadding = (int) android.util.TypedValue.applyDimension(
-                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 88, getResources().getDisplayMetrics());
         rv.setPadding(rv.getPaddingLeft(), topPadding, rv.getPaddingRight(), bottomPadding);
+
+        ViewCompat.setOnApplyWindowInsetsListener(rv, (v, windowInsets) -> {
+            try {
+                final androidx.core.graphics.Insets statusInsets =
+                        windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                final int currentSbHeight = statusInsets != null && statusInsets.top > 0
+                        ? statusInsets.top
+                        : ((activity instanceof MainActivity) ? ((MainActivity) activity).getStatusBarHeight() : 0);
+                final int currentAbHeight = (activity instanceof MainActivity)
+                        ? ((MainActivity) activity).getActionBarHeight()
+                        : (int) android.util.TypedValue.applyDimension(
+                                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+                rv.setPadding(rv.getPaddingLeft(), currentSbHeight + currentAbHeight, rv.getPaddingRight(), bottomPadding);
+            } catch (final Exception ignored) {
+            }
+            return windowInsets;
+        });
     }
 
     @Override

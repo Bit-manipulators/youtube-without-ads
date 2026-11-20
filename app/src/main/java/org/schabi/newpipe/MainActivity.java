@@ -221,6 +221,16 @@ public class MainActivity extends AppCompatActivity {
                         lp.bottomMargin = baseMargin + navBottom;
                         mainBinding.bottomDockContainer.setLayoutParams(lp);
                     }
+                    if (mainBinding.inAppFloatingPlayer != null) {
+                        final ViewGroup.MarginLayoutParams flp =
+                                (ViewGroup.MarginLayoutParams) mainBinding.inAppFloatingPlayer.getLayoutParams();
+                        if (flp != null) {
+                            final int floatingBaseMargin = (int) android.util.TypedValue.applyDimension(
+                                    android.util.TypedValue.COMPLEX_UNIT_DIP, 88, getResources().getDisplayMetrics());
+                            flp.bottomMargin = floatingBaseMargin + navBottom;
+                            mainBinding.inAppFloatingPlayer.setLayoutParams(flp);
+                        }
+                    }
                 }
             } catch (final Exception e) {
                 Log.e(TAG, "Error applying window insets", e);
@@ -986,19 +996,24 @@ public class MainActivity extends AppCompatActivity {
         final Fragment fragment = getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_holder);
         final View holder = findViewById(R.id.fragment_holder);
-        if (fragment instanceof MainFragment) {
+        if (fragment instanceof MainFragment || fragment instanceof SearchFragment) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setTitle(null);
             toolbarLayoutBinding.toolbar.setTitle(null);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            if (toolbarLayoutBinding.toolbarTitleContainer != null) {
-                toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
-            }
-            toolbarLayoutBinding.toolbar.setNavigationIcon(null);
-            mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
+            if (fragment instanceof MainFragment) {
+                if (toolbarLayoutBinding.toolbarTitleContainer != null) {
+                    toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
+                }
+                toolbarLayoutBinding.toolbar.setNavigationIcon(null);
+                mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
 
-            final MainFragment mainFragment = (MainFragment) fragment;
-            updateToolbarBranding(mainFragment.isCurrentTabHistory());
+                final MainFragment mainFragment = (MainFragment) fragment;
+                updateToolbarBranding(mainFragment.isCurrentTabHistory());
+            } else {
+                updateToolbarBranding(false);
+                mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            }
 
             if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
                 final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
@@ -1214,7 +1229,7 @@ public class MainActivity extends AppCompatActivity {
                             final float maxTransX = parent.getWidth() - playerView.getRight();
                             final float minTransY = -playerView.getTop();
                             final float maxTransY = parent.getHeight() - playerView.getBottom()
-                                    - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 60, getResources().getDisplayMetrics());
+                                    - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 92, getResources().getDisplayMetrics());
 
                             newTransX = Math.max(minTransX, Math.min(newTransX, maxTransX));
                             newTransY = Math.max(minTransY, Math.min(newTransY, maxTransY));

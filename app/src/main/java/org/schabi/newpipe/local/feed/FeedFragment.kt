@@ -189,10 +189,34 @@ class FeedFragment : BaseStateFragment<FeedState>() {
 
     private fun setupFrontPagePadding(rv: RecyclerView) {
         rv.clipToPadding = false
-        val padding = android.util.TypedValue.applyDimension(
-            android.util.TypedValue.COMPLEX_UNIT_DIP, 56f, resources.displayMetrics
+        val sbHeight = (activity as? org.schabi.newpipe.MainActivity)?.statusBarHeight ?: 0
+        val abHeight = (activity as? org.schabi.newpipe.MainActivity)?.actionBarHeight
+            ?: android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 56f, resources.displayMetrics
+            ).toInt()
+        val topPadding = sbHeight + abHeight
+        val bottomPadding = android.util.TypedValue.applyDimension(
+            android.util.TypedValue.COMPLEX_UNIT_DIP, 88f, resources.displayMetrics
         ).toInt()
-        rv.setPadding(rv.paddingLeft, padding, rv.paddingRight, padding)
+        rv.setPadding(rv.paddingLeft, topPadding, rv.paddingRight, bottomPadding)
+
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rv) { _, windowInsets ->
+            try {
+                val statusInsets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+                val currentSbHeight = if (statusInsets != null && statusInsets.top > 0) {
+                    statusInsets.top
+                } else {
+                    (activity as? org.schabi.newpipe.MainActivity)?.statusBarHeight ?: 0
+                }
+                val currentAbHeight = (activity as? org.schabi.newpipe.MainActivity)?.actionBarHeight
+                    ?: android.util.TypedValue.applyDimension(
+                        android.util.TypedValue.COMPLEX_UNIT_DIP, 56f, resources.displayMetrics
+                    ).toInt()
+                rv.setPadding(rv.paddingLeft, currentSbHeight + currentAbHeight, rv.paddingRight, bottomPadding)
+            } catch (ignored: Exception) {
+            }
+            windowInsets
+        }
     }
 
     override fun onPause() {

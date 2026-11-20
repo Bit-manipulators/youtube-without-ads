@@ -28,11 +28,9 @@
         <!-- Glassmorphism Floating Bottom Dock -->
         <FrameLayout
             android:id="@+id/bottom_dock_container"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
+            android:layout_gravity="bottom|center_horizontal"
             android:layout_marginBottom="12dp"
             android:background="?attr/glass_dock_drawable"
             android:elevation="12dp"
@@ -40,10 +38,11 @@
 
             <org.schabi.newpipe.views.ScrollableTabLayout
                 android:id="@+id/main_tab_layout"
-                android:layout_width="match_parent"
+                android:layout_width="220dp"
                 android:layout_height="52dp"
                 android:background="@android:color/transparent"
                 app:tabGravity="fill"
+                app:tabBackground="@drawable/bg_dock_tab_ripple"
                 app:tabIndicator="?attr/glass_tab_indicator_drawable"
                 app:tabIndicatorColor="@android:color/transparent"
                 app:tabIndicatorAnimationMode="elastic"
@@ -73,10 +72,10 @@
             android:layout_height="118dp"
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="72dp"
+            android:layout_marginBottom="88dp"
             android:visibility="gone"
             app:cardCornerRadius="14dp"
-            app:cardElevation="10dp"
+            app:cardElevation="16dp"
             app:cardBackgroundColor="@android:color/black">
 
             <FrameLayout

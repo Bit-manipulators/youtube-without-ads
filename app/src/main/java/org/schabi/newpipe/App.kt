@@ -131,6 +131,17 @@ open class App :
         .logger(if (BuildConfig.DEBUG) DebugLogger() else null)
         .allowRgb565(getSystemService<ActivityManager>()!!.isLowRamDevice)
         .crossfade(true)
+        .memoryCache {
+            coil3.memory.MemoryCache.Builder()
+                .maxSizePercent(this, 0.25)
+                .build()
+        }
+        .diskCache {
+            coil3.disk.DiskCache.Builder()
+                .directory(cacheDir.resolve("coil_image_cache"))
+                .maxSizeBytes(128L * 1024 * 1024)
+                .build()
+        }
         .components {
             add(OkHttpNetworkFetcherFactory(callFactory = DownloaderImpl.getInstance().client))
         }.build()

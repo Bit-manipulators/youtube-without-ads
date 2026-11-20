@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:title="@string/about_us_title">
+
+    <PreferenceCategory
+        android:title="@string/about_app_category"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="about_app_name"
+            android:title="@string/app_name"
+            android:summary="@string/about_app_summary"
+            android:icon="@drawable/ic_youtube_logo_play"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="about_version"
+            android:title="@string/version"
+            android:summary="4.8.0"
+            android:icon="@drawable/ic_info_outline"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/about_organization_category"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="about_organization"
+            android:title="@string/about_organization_title"
+            android:summary="@string/about_organization_summary"
+            android:icon="@drawable/ic_person"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="about_creator_maintainer"
+            android:title="@string/about_creator_title"
+            android:summary="@string/about_creator_summary"
+            android:icon="@drawable/ic_person"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="about_github_repo"
+            android:title="@string/about_github_title"
+            android:summary="https://github.com/Bit-manipulators/youtube-without-ads"
+            android:icon="@drawable/ic_language"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

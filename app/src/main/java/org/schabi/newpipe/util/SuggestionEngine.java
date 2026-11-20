@@ -10,6 +10,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import org.schabi.newpipe.App;
+import org.schabi.newpipe.NewPipeDatabase;
+import org.schabi.newpipe.database.history.model.StreamHistoryEntry;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.kiosk.KioskInfo;
 import org.schabi.newpipe.extractor.search.SearchInfo;
@@ -26,7 +29,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import io.reactivex.rxjava3.core.Single;
 
 /**
- * Engine responsible for home feed recommendations and filtering live streams.
+ * Engine responsible for personalized recommendations and filtering live streams.
+ * Incorporates user search history and watch history for relevant suggestions.
  */
 public final class SuggestionEngine {
     private static final String TAG = "SuggestionEngine";
@@ -122,7 +126,166 @@ public final class SuggestionEngine {
     }
 
     /**
-     * Fetches random non-live videos from YouTube using rotating discovery topics.
+     * Extracts interest topics from the user's search history and watch history.
+     *
+     * @return list of interest search queries
+     */
+    public static List<String> getUserInterestQueries() {
+        final List<String> interests = new ArrayList<>();
+        try {
+            final App app = App.getInstance();
+            if (app != null) {
+                final NewPipeDatabase db = NewPipeDatabase.getInstance(app);
+
+                // 1. Unique search history queries
+                final List<String> searches = db.searchHistoryDAO()
+                        .getUniqueEntries(15)
+                        .firstElement()
+                        .onErrorReturnItem(Collections.emptyList())
+                        .blockingGet();
+                if (searches != null) {
+                    for (final String s : searches) {
+                        if (!TextUtils.isEmpty(s) && !interests.contains(s.trim())) {
+                            interests.add(s.trim());
+                        }
+                    }
+                }
+
+                // 2. Watch history channels and keywords
+                final List<StreamHistoryEntry> streamHistory = db.streamHistoryDAO()
+                        .getHistory()
+                        .firstElement()
+                        .onErrorReturnItem(Collections.emptyList())
+                        .blockingGet();
+                if (streamHistory != null) {
+                    int count = 0;
+                    for (final StreamHistoryEntry entry : streamHistory) {
+                        if (entry != null && entry.getStreamEntity() != null) {
+                            final String uploader = entry.getStreamEntity().getUploader();
+                            if (!TextUtils.isEmpty(uploader) && !interests.contains(uploader.trim())) {
+                                interests.add(uploader.trim());
+                                count++;
+                            }
+                            final String title = entry.getStreamEntity().getTitle();
+                            if (!TextUtils.isEmpty(title)) {
+                                final String clean = title.replaceAll("[^a-zA-Z0-9 ]", " ").trim();
+                                if (clean.length() >= 4 && clean.length() <= 40 && !interests.contains(clean)) {
+                                    interests.add(clean);
+                                    count++;
+                                }
+                            }
+                        }
+                        if (count >= 15) {
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (final Exception e) {
+            Log.w(TAG, "Could not fetch user history for suggestions", e);
+        }
+        return interests;
+    }
+
+    /**
+     * Retrieves the next suggestion topic, balancing user history interests (75%)
+     * with curated discovery topics (25%).
+     *
+     * @return query string
+     */
+    public static String getNextSuggestionTopic() {
+        final List<String> userInterests = getUserInterestQueries();
+        if (!userInterests.isEmpty()) {
+            final boolean pickHistory = ThreadLocalRandom.current().nextInt(100) < 75;
+            if (pickHistory) {
+                final int idx = ThreadLocalRandom.current().nextInt(userInterests.size());
+                return userInterests.get(idx);
+            }
+        }
+        final int idx = ThreadLocalRandom.current().nextInt(DISCOVERY_TOPICS.length);
+        return DISCOVERY_TOPICS[idx];
+    }
+
+    /**
+     * Searches YouTube for videos matching the given query and removes live streams.
+     *
+     * @param serviceId service identifier
+     * @param query search query
+     * @return single containing non-live stream items
+     */
+    public static Single<List<StreamInfoItem>> fetchVideosForQuery(final int serviceId,
+                                                                   final String query) {
+        return ExtractorHelper.searchFor(serviceId, query,
+                Collections.singletonList("videos"), "")
+                .map(SearchInfo::getRelatedItems)
+                .map(items -> {
+                    final List<StreamInfoItem> candidates = new ArrayList<>();
+                    if (items != null) {
+                        for (final InfoItem item : items) {
+                            if (item instanceof StreamInfoItem) {
+                                final StreamInfoItem streamItem = (StreamInfoItem) item;
+                                if (!isLiveStreamItem(streamItem)) {
+                                    candidates.add(streamItem);
+                                }
+                            }
+                        }
+                    }
+                    Collections.shuffle(candidates);
+                    return candidates;
+                })
+                .onErrorReturnItem(Collections.emptyList());
+    }
+
+    /**
+     * Fetches personalized recommendation videos, balancing user history and discovery topics,
+     * and deduplicating against already seen URLs.
+     *
+     * @param serviceId streaming service identifier
+     * @param seenUrls set of already seen video URLs (or null)
+     * @param limit maximum number of items to return
+     * @return single containing list of stream items
+     */
+    public static Single<List<StreamInfoItem>> fetchRecommendations(final int serviceId,
+                                                                    final Set<String> seenUrls,
+                                                                    final int limit) {
+        return Single.fromCallable(() -> {
+            final List<String> topics = new ArrayList<>();
+            topics.add(getNextSuggestionTopic());
+            topics.add(getNextSuggestionTopic());
+            return topics;
+        }).flatMap(topics -> {
+            final Single<List<StreamInfoItem>> q1 = fetchVideosForQuery(serviceId, topics.get(0));
+            final Single<List<StreamInfoItem>> q2 = fetchVideosForQuery(serviceId, topics.get(1));
+            return Single.zip(q1, q2, (list1, list2) -> {
+                final List<StreamInfoItem> combined = new ArrayList<>();
+                if (list1 != null) {
+                    combined.addAll(list1);
+                }
+                if (list2 != null) {
+                    combined.addAll(list2);
+                }
+
+                final List<StreamInfoItem> result = new ArrayList<>();
+                for (final StreamInfoItem item : combined) {
+                    if (item != null && item.getUrl() != null) {
+                        if (seenUrls == null || seenUrls.add(item.getUrl())) {
+                            result.add(item);
+                        }
+                    }
+                    if (result.size() >= limit) {
+                        break;
+                    }
+                }
+                return result;
+            });
+        }).onErrorReturn(throwable -> {
+            Log.w(TAG, "Error fetching recommendations", throwable);
+            return Collections.emptyList();
+        });
+    }
+
+    /**
+     * Fetches random non-live videos from YouTube.
      *
      * @param serviceId streaming service identifier
      * @param limit maximum number of random videos to retrieve
@@ -130,41 +293,14 @@ public final class SuggestionEngine {
      */
     public static Single<List<StreamInfoItem>> fetchRandomVideos(final int serviceId,
                                                                 final int limit) {
-        return Single.fromCallable(() -> {
-            final int index = ThreadLocalRandom.current().nextInt(DISCOVERY_TOPICS.length);
-            return DISCOVERY_TOPICS[index];
-        }).flatMap(topic -> ExtractorHelper.searchFor(serviceId, topic,
-                Collections.singletonList("videos"), "")
-                .map(SearchInfo::getRelatedItems)
-                .map(items -> {
-                    final List<StreamInfoItem> randomCandidates = new ArrayList<>();
-                    if (items != null) {
-                        for (final InfoItem item : items) {
-                            if (item instanceof StreamInfoItem) {
-                                final StreamInfoItem streamItem = (StreamInfoItem) item;
-                                if (!isLiveStreamItem(streamItem)) {
-                                    randomCandidates.add(streamItem);
-                                }
-                            }
-                        }
-                    }
-                    Collections.shuffle(randomCandidates);
-                    final int count = Math.min(limit, randomCandidates.size());
-                    final List<StreamInfoItem> result =
-                            new ArrayList<>(randomCandidates.subList(0, count));
-                    return result;
-                }))
-                .onErrorReturn(throwable -> {
-                    Log.w(TAG, "Error fetching random videos, falling back", throwable);
-                    return Collections.emptyList();
-                });
+        return fetchRecommendations(serviceId, null, limit);
     }
 
     /**
      * Loads the Home Feed:
      * 1. Fetches trending kiosk
      * 2. Removes live stream clutter (like live news, etc.)
-     * 3. Replaces the live section with fresh random videos
+     * 3. Replaces the live section with personalized history/discovery recommendations
      *
      * @param serviceId service identifier
      * @param url kiosk URL
@@ -179,13 +315,13 @@ public final class SuggestionEngine {
                     final List<StreamInfoItem> cleanTrending =
                             filterLiveStreams(kioskInfo.getRelatedItems());
 
-                    return fetchRandomVideos(serviceId, 8)
+                    return fetchRecommendations(serviceId, null, 10)
                             .onErrorReturnItem(Collections.emptyList())
                             .map(randomVideos -> {
                                 final List<StreamInfoItem> finalFeed = new ArrayList<>();
                                 final Set<String> seenUrls = new HashSet<>();
 
-                                // Insert random videos at the top (replacing live section)
+                                // Insert personalized recommendations at the top
                                 for (final StreamInfoItem item : randomVideos) {
                                     if (item.getUrl() != null && seenUrls.add(item.getUrl())) {
                                         finalFeed.add(item);

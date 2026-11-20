@@ -40,7 +40,7 @@ configure<ApplicationExtension> {
     namespace = NEWPIPE_APPLICATION_ID_OLD
 
     defaultConfig {
-        applicationId = NEWPIPE_APPLICATION_ID_OLD
+        applicationId = ADFREEYT_APPLICATION_ID
         resValue("string", "app_name", "AdFreeYT")
         minSdk {
             version = release(NEWPIPE_VERSION_SDK_MIN)
@@ -49,9 +49,9 @@ configure<ApplicationExtension> {
             version = release(NEWPIPE_VERSION_SDK_TARGET)
         }
 
-        versionCode = 1035
+        versionCode = 1036
 
-        versionName = "4.7.0"
+        versionName = "4.8.0"
         System.getProperty("versionNameSuffix")?.let { versionNameSuffix = it }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -207,17 +207,25 @@ public class PlayerDataSource {
 
     private static void instantiateCacheIfNeeded(final Context context) {
         if (cache == null) {
-            final File cacheDir = new File(context.getExternalCacheDir(), CACHE_FOLDER_NAME);
+            File baseDir = context.getExternalCacheDir();
+            if (baseDir == null || !baseDir.canWrite()) {
+                baseDir = context.getCacheDir();
+            }
+            final File cacheDir = new File(baseDir, CACHE_FOLDER_NAME);
             if (DEBUG) {
                 Log.d(TAG, "instantiateCacheIfNeeded: cacheDir = " + cacheDir.getAbsolutePath());
             }
-            if (!cacheDir.exists() && !cacheDir.mkdir()) {
+            if (!cacheDir.exists() && !cacheDir.mkdirs()) {
                 Log.w(TAG, "instantiateCacheIfNeeded: could not create cache dir");
             }
 
-            final LeastRecentlyUsedCacheEvictor evictor =
-                    new LeastRecentlyUsedCacheEvictor(PlayerHelper.getPreferredCacheSize());
-            cache = new SimpleCache(cacheDir, evictor, new StandaloneDatabaseProvider(context));
+            try {
+                final LeastRecentlyUsedCacheEvictor evictor =
+                        new LeastRecentlyUsedCacheEvictor(PlayerHelper.getPreferredCacheSize());
+                cache = new SimpleCache(cacheDir, evictor, new StandaloneDatabaseProvider(context));
+            } catch (final Exception e) {
+                Log.e(TAG, "Failed to instantiate media cache", e);
+            }
         }
     }
     //endregion

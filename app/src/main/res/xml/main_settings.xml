@@ -40,4 +40,11 @@
         android:title="@string/settings_category_backup_restore_title"
         app:iconSpaceReserved="false" />
 
+    <PreferenceScreen
+        android:fragment="org.schabi.newpipe.settings.AboutSettingsFragment"
+        android:icon="@drawable/ic_info_outline"
+        android:title="@string/about_us_title"
+        android:summary="@string/about_us_summary"
+        app:iconSpaceReserved="false" />
+
 </PreferenceScreen>
