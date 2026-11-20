@@ -136,12 +136,6 @@ open class App :
                 .maxSizePercent(this, 0.25)
                 .build()
         }
-        .diskCache {
-            coil3.disk.DiskCache.Builder()
-                .directory(cacheDir.resolve("coil_image_cache"))
-                .maxSizeBytes(128L * 1024 * 1024)
-                .build()
-        }
         .components {
             add(OkHttpNetworkFetcherFactory(callFactory = DownloaderImpl.getInstance().client))
         }.build()
