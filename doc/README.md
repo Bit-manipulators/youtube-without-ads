@@ -2,15 +2,6 @@
 
 # 🎬 AdFreeYT
 
-**A fast, private, and completely ad-free YouTube experience for Android.**
-
-[![Latest Release](https://img.shields.io/github/v/release/Bit-manipulators/youtube-without-ads?style=for-the-badge&color=E62117&label=Release&logo=github)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Bit-manipulators/youtube-without-ads/build-apk.yml?branch=newpipe&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Bit-manipulators/youtube-without-ads/actions)
-[![Android](https://img.shields.io/badge/Android-5.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE)
-
-<br/>
-
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
 <a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.7.apk">
   <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.7 APK"/>
