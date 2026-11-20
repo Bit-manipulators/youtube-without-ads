@@ -104,13 +104,14 @@
 
 ---
 
-## 🚀 What's New in v3.5
+## 🚀 What's New in v4.7
 
-- **True YouTube Bottom Navigation**: Pinned 3 primary bottom tabs (**Home**, **Save**, **History**) with clean icons and labels.
-- **Header Settings & Brand Icon**: Quick-access settings cog placed right before the app logo in the top bar.
-- **Smooth Auto-Hide Animations**: Both top and bottom bars smoothly slide away on scroll-down and slide back on scroll-up with zero empty black space.
-- **Edge-to-Edge Feed Layout**: Video cards seamlessly fill the entire display height.
-- **Live Stream Filter**: Homepage clean from live-stream clutter with random discovery injection.
+- **Glassmorphism Acrylic Dock & Top Bar**: Modern translucent navigation dock with circular active tab indicator and acrylic search bar.
+- **Pure AMOLED Black Experience**: True deep black default styling with no gray tints for maximum battery savings on OLED screens.
+- **Fixed Search Insets**: Clean search suggestions list with zero overlap from the glass top search header.
+- **Crash Fixes & Direct Issue Reporting**: Automated crash diagnostics with direct GitHub issue submission and email support.
+- **Seamless Auto-Updates**: In-app new version notifications and seamless in-place updates with zero data loss.
+- **Simplified Settings & Smart Defaults**: Clutter-free settings with automatic Downloads directory handling.
 
 ---
 
