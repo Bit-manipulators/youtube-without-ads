@@ -249,18 +249,7 @@ public final class DeviceUtils {
     }
 
     public static boolean isTablet(@NonNull final Context context) {
-        final String tabletModeSetting = PreferenceManager.getDefaultSharedPreferences(context)
-                .getString(context.getString(R.string.tablet_mode_key), "");
-
-        if (tabletModeSetting.equals(context.getString(R.string.tablet_mode_on_key))) {
-            return true;
-        } else if (tabletModeSetting.equals(context.getString(R.string.tablet_mode_off_key))) {
-            return false;
-        }
-
-        // else automatically determine whether we are in a tablet or not
-        return (context.getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+        return false;
     }
 
     public static boolean isConfirmKey(final int keyCode) {

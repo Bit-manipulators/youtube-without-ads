@@ -23,10 +23,10 @@ public class MainSettingsFragment extends BasePreferenceFragment {
         setHasOptionsMenu(true); // Otherwise onCreateOptionsMenu is not called
 
         // Check if the app is updatable
-        if (!ReleaseVersionUtil.INSTANCE.isReleaseApk()) {
-            getPreferenceScreen().removePreference(
-                    requirePreference(R.string.update_pref_screen_key));
-
+        final androidx.preference.Preference updatePref =
+                findPreference(getString(R.string.update_pref_screen_key));
+        if (updatePref != null && !ReleaseVersionUtil.INSTANCE.isReleaseApk()) {
+            getPreferenceScreen().removePreference(updatePref);
             defaultPreferences.edit().putBoolean(getString(R.string.update_app_key), false).apply();
         }
 

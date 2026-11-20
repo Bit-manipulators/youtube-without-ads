@@ -299,9 +299,7 @@ public final class VideoDetailFragment
             // If the video is playing but orientation changed
             // let's make the video in fullscreen again
             checkLandscape();
-        } else if (playerUi.map(ui -> ui.isFullscreen() && !ui.isVerticalVideo()).orElse(false)
-                // Tablet UI has orientation-independent fullscreen
-                && !DeviceUtils.isTablet(activity)) {
+        } else if (playerUi.map(ui -> ui.isFullscreen() && !ui.isVerticalVideo()).orElse(false)) {
             // Device is in portrait orientation after rotation but UI is in fullscreen.
             // Return back to non-fullscreen state
             playerUi.ifPresent(MainPlayerUi::toggleFullscreen);
@@ -768,11 +766,7 @@ public final class VideoDetailFragment
 
         // If we are in fullscreen mode just exit from it via first back press
         if (isFullscreen()) {
-            if (!DeviceUtils.isTablet(activity)) {
-                player.pause();
-            }
             restoreDefaultOrientation();
-            setAutoPlay(false);
             return true;
         }
 
@@ -1573,11 +1567,7 @@ public final class VideoDetailFragment
             toggleFullscreenIfInFullscreenMode();
         }
 
-        // This will show systemUI and pause the player.
-        // User can tap on Play button and video will be in fullscreen mode again
-        // Note for tablet: trying to avoid orientation changes since it's not easy
-        // to physically rotate the tablet every time
-        if (activity != null && !DeviceUtils.isTablet(activity)) {
+        if (activity != null) {
             activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
@@ -2044,23 +2034,38 @@ public final class VideoDetailFragment
 
     @Override
     public void onScreenRotationButtonClicked() {
-        // On Android TV screen rotation is not supported
-        // In tablet user experience will be better if screen will not be rotated
-        // from landscape to portrait every time.
-        // Just turn on fullscreen mode in landscape orientation
-        // or portrait & unlocked global orientation
-        final boolean isLandscape = DeviceUtils.isLandscape(requireContext());
-        if (DeviceUtils.isTv(activity) || DeviceUtils.isTablet(activity)
-                && (!globalScreenOrientationLocked(activity) || isLandscape)) {
+        if (activity == null) {
+            return;
+        }
+        if (DeviceUtils.isTv(activity)) {
             player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
             return;
         }
 
-        final int newOrientation = isLandscape
-                ? ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+        final boolean isLandscape = DeviceUtils.isLandscape(activity);
+        final boolean isFs = isFullscreen();
 
-        activity.setRequestedOrientation(newOrientation);
+        if (isFs || isLandscape) {
+            if (isFs) {
+                player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
+            }
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (activity != null) {
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                }
+            }, 800);
+        } else {
+            if (!isFs) {
+                player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
+            }
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (activity != null) {
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                }
+            }, 800);
+        }
     }
 
     /*
@@ -2104,9 +2109,10 @@ public final class VideoDetailFragment
         activity.getWindow().getDecorView().setSystemUiVisibility(0);
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (activity instanceof MainActivity) {
+            ((MainActivity) activity).setGlassStatusBarVisible(true);
             ((MainActivity) activity).applyTransparentSystemBars();
         } else {
-            activity.getWindow().setStatusBarColor(MainActivity.STATUS_BAR_COLOR_70_TRANSPARENT);
+            activity.getWindow().setStatusBarColor(Color.TRANSPARENT);
             activity.getWindow().setNavigationBarColor(Color.TRANSPARENT);
         }
     }
@@ -2118,6 +2124,10 @@ public final class VideoDetailFragment
 
         if (activity == null) {
             return;
+        }
+
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).setGlassStatusBarVisible(false);
         }
 
         // Prevent jumping of the player on devices with cutout
@@ -2514,9 +2524,7 @@ public final class VideoDetailFragment
                         // Conditions when the player should be expanded to fullscreen
                         if (DeviceUtils.isLandscape(requireContext())
                                 && isPlayerAvailable()
-                                && player.isPlaying()
-                                && !isFullscreen()
-                                && !DeviceUtils.isTablet(activity)) {
+                                && !isFullscreen()) {
                             player.UIs().get(MainPlayerUi.class)
                                     .ifPresent(MainPlayerUi::toggleFullscreen);
                         }

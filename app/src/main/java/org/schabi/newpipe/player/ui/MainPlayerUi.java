@@ -964,12 +964,8 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
         final boolean videoInLandscapeButNotInFullscreen = isLandscape()
                 && !isFullscreen
                 && !player.isAudioOnly();
-        final boolean notPaused = player.getCurrentState() != STATE_COMPLETED
-                && player.getCurrentState() != STATE_PAUSED;
 
-        if (videoInLandscapeButNotInFullscreen
-                && notPaused
-                && !DeviceUtils.isTablet(context)) {
+        if (videoInLandscapeButNotInFullscreen) {
             toggleFullscreen();
         }
     }

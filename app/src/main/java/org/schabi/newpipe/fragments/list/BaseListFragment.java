@@ -261,7 +261,7 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
         final int topPadding = (int) android.util.TypedValue.applyDimension(
                 android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
         final int bottomPadding = (int) android.util.TypedValue.applyDimension(
-                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 88, getResources().getDisplayMetrics());
         rv.setPadding(rv.getPaddingLeft(), topPadding, rv.getPaddingRight(), bottomPadding);
     }
 

@@ -112,9 +112,21 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         binding = FragmentMainBinding.bind(rootView);
 
         ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, windowInsets) -> {
-            final Insets navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            if (binding != null && binding.mainTabLayout != null) {
-                binding.mainTabLayout.setPadding(0, 0, 0, navInsets.bottom);
+            try {
+                final Insets navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                if (binding != null && binding.bottomDockContainer != null) {
+                    final int baseMargin = (int) android.util.TypedValue.applyDimension(
+                            android.util.TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
+                    final int navBottom = navInsets != null ? navInsets.bottom : 0;
+                    final ViewGroup.MarginLayoutParams lp =
+                            (ViewGroup.MarginLayoutParams) binding.bottomDockContainer.getLayoutParams();
+                    if (lp != null) {
+                        lp.bottomMargin = baseMargin + navBottom;
+                        binding.bottomDockContainer.setLayoutParams(lp);
+                    }
+                }
+            } catch (final Exception e) {
+                Log.e(TAG, "Error applying insets to bottom dock", e);
             }
             return windowInsets;
         });
@@ -254,7 +266,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
 
     @Nullable
     public View getBottomBar() {
-        return binding != null ? binding.mainTabLayout : null;
+        return binding != null ? binding.bottomDockContainer : null;
     }
 
     public void commitPlaylistTabs() {
@@ -268,24 +280,13 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             return;
         }
         final ScrollableTabLayout tabLayout = binding.mainTabLayout;
-        final ViewPager viewPager = binding.pager;
         mainTabsPositionBottom = true;
 
-        final var tabParams = (RelativeLayout.LayoutParams) tabLayout.getLayoutParams();
-        tabParams.removeRule(ALIGN_PARENT_TOP);
-        tabParams.addRule(ALIGN_PARENT_BOTTOM);
         tabLayout.setSelectedTabIndicatorGravity(INDICATOR_GRAVITY_TOP);
         tabLayout.setSelectedTabIndicatorHeight(0);
-        tabLayout.setLayoutParams(tabParams);
 
-        final var pagerParams = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
-        pagerParams.removeRule(ABOVE);
-        pagerParams.removeRule(BELOW);
-        viewPager.setLayoutParams(pagerParams);
-
-        // change the background and icon color of the tab layout:
-        tabLayout.setBackgroundColor(ThemeHelper.resolveColorFromAttr(requireContext(),
-                android.R.attr.windowBackground));
+        // Keep tab layout transparent so the glass dock background shows through:
+        tabLayout.setBackgroundColor(Color.TRANSPARENT);
 
         final int selectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
                 android.R.attr.textColorPrimary);

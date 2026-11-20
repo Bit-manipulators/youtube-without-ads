@@ -184,11 +184,27 @@ public class MainActivity extends AppCompatActivity {
         toolbarLayoutBinding = mainBinding.toolbarLayout;
         setContentView(mainBinding.getRoot());
 
+        final int initialSbHeight = getStatusBarHeight();
+        if (initialSbHeight > 0 && mainBinding.glassStatusBar != null) {
+            final ViewGroup.LayoutParams lp = mainBinding.glassStatusBar.getLayoutParams();
+            if (lp != null) {
+                lp.height = initialSbHeight;
+                mainBinding.glassStatusBar.setLayoutParams(lp);
+            }
+        }
+
         ViewCompat.setOnApplyWindowInsetsListener(mainBinding.getRoot(), (v, windowInsets) -> {
             try {
                 final Insets statusInsets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
                 if (statusInsets != null && statusInsets.top > 0) {
                     statusBarHeight = statusInsets.top;
+                }
+                if (mainBinding.glassStatusBar != null && statusBarHeight > 0) {
+                    final ViewGroup.LayoutParams lp = mainBinding.glassStatusBar.getLayoutParams();
+                    if (lp != null && lp.height != statusBarHeight) {
+                        lp.height = statusBarHeight;
+                        mainBinding.glassStatusBar.setLayoutParams(lp);
+                    }
                 }
                 if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
                     toolbarLayoutBinding.getRoot().setPadding(0, statusBarHeight, 0, 0);
@@ -261,11 +277,13 @@ public class MainActivity extends AppCompatActivity {
                                 if (fragment instanceof MainFragment) {
                                     final View bottomBar = ((MainFragment) fragment).getBottomBar();
                                     if (bottomBar != null && slideOffset >= 0) {
-                                        final int bottomHeight = bottomBar.getHeight() > 0
+                                        final int bottomMargin = bottomBar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
+                                                ? ((ViewGroup.MarginLayoutParams) bottomBar.getLayoutParams()).bottomMargin : 0;
+                                        final int bottomHeight = (bottomBar.getHeight() > 0
                                                 ? bottomBar.getHeight()
                                                 : (int) android.util.TypedValue.applyDimension(
                                                         android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
-                                                        getResources().getDisplayMetrics());
+                                                        getResources().getDisplayMetrics())) + bottomMargin;
                                         bottomBar.setTranslationY(bottomHeight * slideOffset);
                                     }
                                 }
@@ -906,10 +924,12 @@ public class MainActivity extends AppCompatActivity {
             final View bottomBar = ((MainFragment) fragment).getBottomBar();
             if (bottomBar != null) {
                 bottomBar.animate().cancel();
-                final int bottomHeight = bottomBar.getHeight() > 0
+                final int bottomMargin = bottomBar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
+                        ? ((ViewGroup.MarginLayoutParams) bottomBar.getLayoutParams()).bottomMargin : 0;
+                final int bottomHeight = (bottomBar.getHeight() > 0
                         ? bottomBar.getHeight()
                         : (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
-                                getResources().getDisplayMetrics());
+                                getResources().getDisplayMetrics())) + bottomMargin;
                 if (visible) {
                     bottomBar.animate()
                             .translationY(0f)
@@ -1028,7 +1048,7 @@ public class MainActivity extends AppCompatActivity {
     public void applyTransparentSystemBars() {
         try {
             WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-            getWindow().setStatusBarColor(STATUS_BAR_COLOR_70_TRANSPARENT);
+            getWindow().setStatusBarColor(Color.TRANSPARENT);
             getWindow().setNavigationBarColor(Color.TRANSPARENT);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 getWindow().setStatusBarContrastEnforced(false);
@@ -1044,6 +1064,12 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (final Exception e) {
             Log.e(TAG, "Error applying transparent system bars", e);
+        }
+    }
+
+    public void setGlassStatusBarVisible(final boolean visible) {
+        if (mainBinding != null && mainBinding.glassStatusBar != null) {
+            mainBinding.glassStatusBar.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
     }
 

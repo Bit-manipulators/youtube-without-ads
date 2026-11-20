@@ -17,6 +17,14 @@
             layout="@layout/toolbar_layout"
             android:id="@+id/toolbar_layout"/>
 
+        <!-- Glassmorphism Status Bar Frost Scrim -->
+        <View
+            android:id="@+id/glass_status_bar"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="?attr/glass_status_bar_drawable"
+            android:elevation="6dp" />
+
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_player_holder"
             android:layout_width="match_parent"

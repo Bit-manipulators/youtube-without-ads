@@ -18,4 +18,7 @@
     <attr name="card_item_background_color" format="color" />
     <attr name="card_item_contrast_color" format="color" />
     <attr name="border_color" format="color" />
+
+    <attr name="glass_dock_drawable" format="reference" />
+    <attr name="glass_status_bar_drawable" format="reference" />
 </resources>

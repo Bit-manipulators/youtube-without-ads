@@ -48,6 +48,8 @@
         <item name="card_item_contrast_color">@color/light_card_item_contrast_color</item>
         <item name="border_color">@color/light_border_color</item>
         <item name="dashed_border">@drawable/dashed_border_light</item>
+        <item name="glass_dock_drawable">@drawable/bg_glass_dock_light</item>
+        <item name="glass_status_bar_drawable">@drawable/bg_glass_status_bar_light</item>
     </style>
     <style name="Base.LightTheme" parent="Base.V21.LightTheme" />
     <style name="LightTheme" parent="Base.LightTheme"/>
@@ -74,6 +76,8 @@
         <item name="card_item_contrast_color">@color/dark_card_item_contrast_color</item>
         <item name="border_color">@color/dark_border_color</item>
         <item name="dashed_border">@drawable/dashed_border_dark</item>
+        <item name="glass_dock_drawable">@drawable/bg_glass_dock_dark</item>
+        <item name="glass_status_bar_drawable">@drawable/bg_glass_status_bar_dark</item>
     </style>
     <style name="Base.DarkTheme" parent="Base.V21.DarkTheme" />
     <style name="DarkTheme" parent="Base.DarkTheme"/>

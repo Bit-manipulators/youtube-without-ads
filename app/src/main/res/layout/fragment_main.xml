@@ -10,17 +10,30 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <org.schabi.newpipe.views.ScrollableTabLayout
-        android:id="@+id/main_tab_layout"
+    <FrameLayout
+        android:id="@+id/bottom_dock_container"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="?android:attr/windowBackground"
-        android:elevation="8dp"
-        app:tabGravity="fill"
-        app:tabIndicatorHeight="0dp"
-        app:tabMinWidth="80dp"
-        app:tabMode="fixed"
-        app:tabTextAppearance="@style/BottomNavTabTextAppearance" />
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="12dp"
+        android:background="?attr/glass_dock_drawable"
+        android:elevation="12dp"
+        android:padding="3dp">
+
+        <org.schabi.newpipe.views.ScrollableTabLayout
+            android:id="@+id/main_tab_layout"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@android:color/transparent"
+            app:tabGravity="fill"
+            app:tabIndicatorHeight="0dp"
+            app:tabMinWidth="60dp"
+            app:tabMode="fixed"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabTextAppearance="@style/BottomNavTabTextAppearance" />
+
+    </FrameLayout>
 
 </RelativeLayout>
