@@ -42,14 +42,18 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.TooltipCompat;
 import androidx.collection.SparseArrayCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.text.HtmlCompat;
 import androidx.core.view.SoftwareKeyboardControllerCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.evernote.android.state.State;
 
+import org.schabi.newpipe.MainActivity;
 import org.schabi.newpipe.R;
 import org.schabi.newpipe.databinding.FragmentSearchBinding;
 import org.schabi.newpipe.error.ErrorInfo;

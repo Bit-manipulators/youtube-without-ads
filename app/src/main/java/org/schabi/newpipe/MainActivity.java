@@ -67,6 +67,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.tabs.TabLayout;
 
 import org.schabi.newpipe.databinding.ActivityMainBinding;
 import org.schabi.newpipe.databinding.DrawerHeaderBinding;
@@ -196,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
         ViewCompat.setOnApplyWindowInsetsListener(mainBinding.getRoot(), (v, windowInsets) -> {
             try {
                 final Insets statusInsets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                final Insets navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
                 if (statusInsets != null && statusInsets.top > 0) {
                     statusBarHeight = statusInsets.top;
                 }

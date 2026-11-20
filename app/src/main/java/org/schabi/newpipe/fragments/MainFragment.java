@@ -299,7 +299,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         }
         mainTabsPositionBottom = true;
 
-        tabLayout.setSelectedTabIndicatorGravity(INDICATOR_GRAVITY_CENTER);
+        tabLayout.setSelectedTabIndicatorGravity(TabLayout.INDICATOR_GRAVITY_CENTER);
         final int indicatorHeight = (int) android.util.TypedValue.applyDimension(
                 android.util.TypedValue.COMPLEX_UNIT_DIP, 44, getResources().getDisplayMetrics());
         tabLayout.setSelectedTabIndicatorHeight(indicatorHeight);
