@@ -914,6 +914,7 @@
     <string name="about_us_summary">Learn more about Bit-manipulators and AdFreeYT</string>
     <string name="about_app_category">Application</string>
     <string name="about_app_summary">A fast, private, and completely ad-free YouTube experience for Android.</string>
+    <string name="version">Version</string>
     <string name="about_organization_category">Organization &amp; Maintenance</string>
     <string name="about_organization_title">Bit-manipulators Organization</string>
     <string name="about_organization_summary">Open source community dedicated to building high-performance, ad-free and privacy-respecting tools.\nhttps://github.com/Bit-manipulators</string>
