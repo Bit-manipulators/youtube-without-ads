@@ -23,8 +23,8 @@
 [![All Releases](https://img.shields.io/badge/All_Releases_%26_Changelog-GitHub-grey?style=flat-square&logo=git)](https://github.com/Bit-manipulators/youtube-without-ads/releases)
 
 <p align="center">
+  <a href="#-screenshots">Screenshots</a> •
   <a href="#-key-features">Key Features</a> •
-  <a href="#-whats-new-in-v35">What's New in v3.5</a> •
   <a href="#-installation-guide">Installation</a> •
   <a href="#-comparison">Why AdFreeYT?</a> •
   <a href="#-license--credits">Credits</a>
@@ -32,6 +32,33 @@
 
 ---
 
+</div>
+
+## 📱 Screenshots
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><b>Home Feed (AMOLED Black)</b></td>
+    <td align="center"><b>Immersive Auto-Hide Scroll</b></td>
+    <td align="center"><b>In-App Mini Floating Player</b></td>
+  </tr>
+  <tr>
+    <td><img src="screenshorts/Screenshot_20261120-121923_AdFreeYT.png" width="240" alt="AdFreeYT Home Feed" /></td>
+    <td><img src="screenshorts/Screenshot_20261120-121927_AdFreeYT.png" width="240" alt="Immersive Auto-Hide" /></td>
+    <td><img src="screenshorts/Screenshot_20261120-122016_AdFreeYT.png" width="240" alt="Mini Floating Player" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>History & Top Actions</b></td>
+    <td align="center"><b>AMOLED Black Settings</b></td>
+    <td align="center"><b>Video Player & Details</b></td>
+  </tr>
+  <tr>
+    <td><img src="screenshorts/Screenshot_20261120-122024_AdFreeYT.png" width="240" alt="History Tab" /></td>
+    <td><img src="screenshorts/Screenshot_20261120-122029_AdFreeYT.png" width="240" alt="Settings Menu" /></td>
+    <td><img src="screenshorts/Screenshot_20261120-122516_AdFreeYT.png" width="240" alt="Video Player" /></td>
+  </tr>
+</table>
 </div>
 
 ## 🌟 Key Features
