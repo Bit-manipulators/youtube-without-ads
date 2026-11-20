@@ -147,7 +147,9 @@ public final class SuggestionEngine {
                     }
                     Collections.shuffle(randomCandidates);
                     final int count = Math.min(limit, randomCandidates.size());
-                    return new ArrayList<>(randomCandidates.subList(0, count));
+                    final List<StreamInfoItem> result =
+                            new ArrayList<>(randomCandidates.subList(0, count));
+                    return result;
                 }))
                 .onErrorReturn(throwable -> {
                     Log.w(TAG, "Error fetching random videos, falling back", throwable);
