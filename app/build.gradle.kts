@@ -49,23 +49,32 @@ configure<ApplicationExtension> {
             version = release(NEWPIPE_VERSION_SDK_TARGET)
         }
 
-        versionCode = 1034
+        versionCode = 1035
 
-        versionName = "4.6.0"
+        versionName = "4.7.0"
         System.getProperty("versionNameSuffix")?.let { versionNameSuffix = it }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("release.keystore")
+            storePassword = "adfreeyt"
+            keyAlias = "adfreeyt"
+            keyPassword = "adfreeyt"
+        }
+    }
+
     buildTypes {
         debug {
             isDebuggable = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             resValue("string", "app_name", "AdFreeYT")
         }
 
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             resValue("string", "app_name", "AdFreeYT")
             isMinifyEnabled = true
             isShrinkResources = true
@@ -77,7 +86,7 @@ configure<ApplicationExtension> {
 
         register("continuous") {
             initWith(getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             isDefault = true
             resValue("string", "app_name", "AdFreeYT")
         }

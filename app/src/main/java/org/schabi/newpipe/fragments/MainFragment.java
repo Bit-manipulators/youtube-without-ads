@@ -105,34 +105,26 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         return inflater.inflate(R.layout.fragment_main, container, false);
     }
 
+    @Nullable
+    private ScrollableTabLayout getTabLayout() {
+        if (activity instanceof MainActivity) {
+            return ((MainActivity) activity).getMainTabLayout();
+        }
+        return null;
+    }
+
     @Override
     protected void initViews(final View rootView, final Bundle savedInstanceState) {
         super.initViews(rootView, savedInstanceState);
 
         binding = FragmentMainBinding.bind(rootView);
 
-        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, windowInsets) -> {
-            try {
-                final Insets navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
-                if (binding != null && binding.bottomDockContainer != null) {
-                    final int baseMargin = (int) android.util.TypedValue.applyDimension(
-                            android.util.TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
-                    final int navBottom = navInsets != null ? navInsets.bottom : 0;
-                    final ViewGroup.MarginLayoutParams lp =
-                            (ViewGroup.MarginLayoutParams) binding.bottomDockContainer.getLayoutParams();
-                    if (lp != null) {
-                        lp.bottomMargin = baseMargin + navBottom;
-                        binding.bottomDockContainer.setLayoutParams(lp);
-                    }
-                }
-            } catch (final Exception e) {
-                Log.e(TAG, "Error applying insets to bottom dock", e);
-            }
-            return windowInsets;
-        });
-
-        binding.mainTabLayout.setupWithViewPager(binding.pager);
-        binding.mainTabLayout.addOnTabSelectedListener(this);
+        final ScrollableTabLayout tabLayout = getTabLayout();
+        if (tabLayout != null) {
+            tabLayout.setupWithViewPager(binding.pager);
+            tabLayout.removeOnTabSelectedListener(this);
+            tabLayout.addOnTabSelectedListener(this);
+        }
 
         setupTabs();
         updateTabLayoutPosition();
@@ -152,6 +144,16 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         mainTabsPositionBottom = true;
         prefs.edit().putBoolean(mainTabsPositionKey, true).apply();
         updateTabLayoutPosition();
+        final ScrollableTabLayout tabLayout = getTabLayout();
+        if (tabLayout != null) {
+            updateTabsIconAndDescription();
+            if (binding != null && binding.pager != null) {
+                final TabLayout.Tab tab = tabLayout.getTabAt(binding.pager.getCurrentItem());
+                if (tab != null && !tab.isSelected()) {
+                    tab.select();
+                }
+            }
+        }
     }
 
     @Override
@@ -167,6 +169,10 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        final ScrollableTabLayout tabLayout = getTabLayout();
+        if (tabLayout != null) {
+            tabLayout.removeOnTabSelectedListener(this);
+        }
         binding = null;
     }
 
@@ -227,12 +233,16 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     }
 
     private void updateTabsIconAndDescription() {
+        final ScrollableTabLayout tabLayout = getTabLayout();
+        if (tabLayout == null) {
+            return;
+        }
         for (int i = 0; i < tabsList.size(); i++) {
-            final TabLayout.Tab tabToSet = binding.mainTabLayout.getTabAt(i);
+            final TabLayout.Tab tabToSet = tabLayout.getTabAt(i);
             if (tabToSet != null) {
                 final Tab tab = tabsList.get(i);
                 tabToSet.setIcon(tab.getTabIconRes(requireContext()));
-                tabToSet.setText(tab.getTabName(requireContext()));
+                tabToSet.setText(null); // Remove text labels for polished icon-only dock
                 tabToSet.setContentDescription(tab.getTabName(requireContext()));
             }
         }
@@ -266,7 +276,14 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
 
     @Nullable
     public View getBottomBar() {
-        return binding != null ? binding.bottomDockContainer : null;
+        return activity instanceof MainActivity ? ((MainActivity) activity).getBottomDockContainer() : null;
+    }
+
+    public void setSelectedTab(final int position) {
+        if (binding != null && binding.pager != null && pagerAdapter != null
+                && position >= 0 && position < pagerAdapter.getCount()) {
+            binding.pager.setCurrentItem(position, true);
+        }
     }
 
     public void commitPlaylistTabs() {
@@ -276,14 +293,16 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     }
 
     private void updateTabLayoutPosition() {
-        if (binding == null) {
+        final ScrollableTabLayout tabLayout = getTabLayout();
+        if (tabLayout == null) {
             return;
         }
-        final ScrollableTabLayout tabLayout = binding.mainTabLayout;
         mainTabsPositionBottom = true;
 
-        tabLayout.setSelectedTabIndicatorGravity(INDICATOR_GRAVITY_TOP);
-        tabLayout.setSelectedTabIndicatorHeight(0);
+        tabLayout.setSelectedTabIndicatorGravity(INDICATOR_GRAVITY_CENTER);
+        final int indicatorHeight = (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 44, getResources().getDisplayMetrics());
+        tabLayout.setSelectedTabIndicatorHeight(indicatorHeight);
 
         // Keep tab layout transparent so the glass dock background shows through:
         tabLayout.setBackgroundColor(Color.TRANSPARENT);

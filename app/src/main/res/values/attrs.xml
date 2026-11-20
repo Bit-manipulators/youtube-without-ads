@@ -21,4 +21,6 @@
 
     <attr name="glass_dock_drawable" format="reference" />
     <attr name="glass_status_bar_drawable" format="reference" />
+    <attr name="glass_toolbar_drawable" format="reference" />
+    <attr name="glass_tab_indicator_drawable" format="reference" />
 </resources>

@@ -50,6 +50,8 @@
         <item name="dashed_border">@drawable/dashed_border_light</item>
         <item name="glass_dock_drawable">@drawable/bg_glass_dock_light</item>
         <item name="glass_status_bar_drawable">@drawable/bg_glass_status_bar_light</item>
+        <item name="glass_toolbar_drawable">@drawable/bg_glass_toolbar_light</item>
+        <item name="glass_tab_indicator_drawable">@drawable/bg_dock_tab_selected_light</item>
     </style>
     <style name="Base.LightTheme" parent="Base.V21.LightTheme" />
     <style name="LightTheme" parent="Base.LightTheme"/>
@@ -78,6 +80,8 @@
         <item name="dashed_border">@drawable/dashed_border_dark</item>
         <item name="glass_dock_drawable">@drawable/bg_glass_dock_dark</item>
         <item name="glass_status_bar_drawable">@drawable/bg_glass_status_bar_dark</item>
+        <item name="glass_toolbar_drawable">@drawable/bg_glass_toolbar_dark</item>
+        <item name="glass_tab_indicator_drawable">@drawable/bg_dock_tab_selected_dark</item>
     </style>
     <style name="Base.DarkTheme" parent="Base.V21.DarkTheme" />
     <style name="DarkTheme" parent="Base.DarkTheme"/>

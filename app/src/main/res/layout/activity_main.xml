@@ -25,6 +25,38 @@
             android:background="?attr/glass_status_bar_drawable"
             android:elevation="6dp" />
 
+        <!-- Glassmorphism Floating Bottom Dock -->
+        <FrameLayout
+            android:id="@+id/bottom_dock_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="12dp"
+            android:background="?attr/glass_dock_drawable"
+            android:elevation="12dp"
+            android:padding="3dp">
+
+            <org.schabi.newpipe.views.ScrollableTabLayout
+                android:id="@+id/main_tab_layout"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@android:color/transparent"
+                app:tabGravity="fill"
+                app:tabIndicator="?attr/glass_tab_indicator_drawable"
+                app:tabIndicatorColor="@android:color/transparent"
+                app:tabIndicatorAnimationMode="elastic"
+                app:tabIndicatorGravity="center"
+                app:tabIndicatorHeight="44dp"
+                app:tabIndicatorFullWidth="false"
+                app:tabMinWidth="60dp"
+                app:tabMode="fixed"
+                app:tabRippleColor="@android:color/transparent"
+                app:tabTextAppearance="@style/BottomNavTabTextAppearance" />
+
+        </FrameLayout>
+
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_player_holder"
             android:layout_width="match_parent"

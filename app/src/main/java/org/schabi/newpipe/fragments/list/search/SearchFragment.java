@@ -363,6 +363,53 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
     protected void initViews(final View rootView, final Bundle savedInstanceState) {
         super.initViews(rootView, savedInstanceState);
 
+        final int topPadding = ((activity instanceof MainActivity) ? ((MainActivity) activity).getStatusBarHeight() : 0)
+                + ((activity instanceof MainActivity) ? ((MainActivity) activity).getActionBarHeight()
+                        : (int) android.util.TypedValue.applyDimension(
+                                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics()));
+        final int bottomPadding = (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 88, getResources().getDisplayMetrics());
+
+        if (searchBinding != null && searchBinding.suggestionsList != null) {
+            searchBinding.suggestionsList.setClipToPadding(false);
+            searchBinding.suggestionsList.setPadding(0, topPadding, 0, bottomPadding);
+        }
+        if (itemsList != null) {
+            itemsList.setClipToPadding(false);
+            itemsList.setPadding(itemsList.getPaddingLeft(), topPadding, itemsList.getPaddingRight(), bottomPadding);
+        }
+        if (searchBinding != null && searchBinding.correctSuggestion != null) {
+            final ViewGroup.LayoutParams lp = searchBinding.correctSuggestion.getLayoutParams();
+            if (lp instanceof ViewGroup.MarginLayoutParams) {
+                ((ViewGroup.MarginLayoutParams) lp).topMargin = topPadding;
+                searchBinding.correctSuggestion.setLayoutParams(lp);
+            }
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, windowInsets) -> {
+            try {
+                final androidx.core.graphics.Insets statusInsets =
+                        windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                final int sbHeight = statusInsets != null && statusInsets.top > 0
+                        ? statusInsets.top
+                        : ((activity instanceof MainActivity) ? ((MainActivity) activity).getStatusBarHeight() : 0);
+                final int abHeight = ((activity instanceof MainActivity) ? ((MainActivity) activity).getActionBarHeight()
+                        : (int) android.util.TypedValue.applyDimension(
+                                android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics()));
+                final int dynamicTopPadding = sbHeight + abHeight;
+                if (searchBinding != null && searchBinding.suggestionsList != null) {
+                    searchBinding.suggestionsList.setClipToPadding(false);
+                    searchBinding.suggestionsList.setPadding(0, dynamicTopPadding, 0, bottomPadding);
+                }
+                if (itemsList != null) {
+                    itemsList.setClipToPadding(false);
+                    itemsList.setPadding(itemsList.getPaddingLeft(), dynamicTopPadding, itemsList.getPaddingRight(), bottomPadding);
+                }
+            } catch (final Exception ignored) {
+            }
+            return windowInsets;
+        });
+
         searchBinding.suggestionsList.setAdapter(suggestionListAdapter);
         // animations are just strange and useless, since the suggestions keep changing too much
         searchBinding.suggestionsList.setItemAnimator(null);

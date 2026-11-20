@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -9,31 +8,5 @@
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <FrameLayout
-        android:id="@+id/bottom_dock_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="12dp"
-        android:background="?attr/glass_dock_drawable"
-        android:elevation="12dp"
-        android:padding="3dp">
-
-        <org.schabi.newpipe.views.ScrollableTabLayout
-            android:id="@+id/main_tab_layout"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:background="@android:color/transparent"
-            app:tabGravity="fill"
-            app:tabIndicatorHeight="0dp"
-            app:tabMinWidth="60dp"
-            app:tabMode="fixed"
-            app:tabRippleColor="@android:color/transparent"
-            app:tabTextAppearance="@style/BottomNavTabTextAppearance" />
-
-    </FrameLayout>
 
 </RelativeLayout>

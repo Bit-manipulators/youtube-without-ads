@@ -69,7 +69,7 @@ public class DefaultKioskFragment extends KioskFragment {
 
     @Override
     public Single<ListExtractor.InfoItemsPage<StreamInfoItem>> loadMoreItemsLogic() {
-        if (currentNextPage != null && !currentNextPage.getId().startsWith("home_feed_page_")) {
+        if (currentNextPage != null && currentNextPage.getId() != null && !currentNextPage.getId().startsWith("home_feed_page_")) {
             return ExtractorHelper.getMoreKioskItems(serviceId, url, currentNextPage)
                     .onErrorResumeNext(throwable -> fetchMoreHomeFeedItems());
         }

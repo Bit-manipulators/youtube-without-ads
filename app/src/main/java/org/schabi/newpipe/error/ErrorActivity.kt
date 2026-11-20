@@ -7,6 +7,7 @@ package org.schabi.newpipe.error
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -148,10 +149,17 @@ class ErrorActivity : AppCompatActivity() {
                         .setData("mailto:".toUri()) // only email apps should handle this
                         .putExtra(Intent.EXTRA_EMAIL, arrayOf(ERROR_EMAIL_ADDRESS))
                         .putExtra(Intent.EXTRA_SUBJECT, errorEmailSubject)
-                        .putExtra(Intent.EXTRA_TEXT, buildJson())
+                        .putExtra(Intent.EXTRA_TEXT, buildMarkdown())
                     ShareUtils.openIntentInApp(context, intent)
-                } else if (action == "GITHUB") { // open the NewPipe issue page on GitHub
-                    ShareUtils.openUrlInApp(this, ERROR_GITHUB_ISSUE_URL)
+                } else if (action == "GITHUB") { // open new issue directly on GitHub with pre-filled details
+                    try {
+                        val titleParam = Uri.encode("[Crash Report] ${errorInfo.userAction.message} - ${BuildConfig.VERSION_NAME}")
+                        val bodyParam = Uri.encode(buildMarkdown())
+                        val issueUrl = "$ERROR_GITHUB_ISSUE_URL/new?title=$titleParam&body=$bodyParam"
+                        ShareUtils.openUrlInApp(this, issueUrl)
+                    } catch (e: Exception) {
+                        ShareUtils.openUrlInApp(this, ERROR_GITHUB_ISSUE_URL)
+                    }
                 }
             }
             .setNegativeButton(R.string.decline, null)
@@ -274,9 +282,9 @@ class ErrorActivity : AppCompatActivity() {
         // BUNDLE TAGS
         const val ERROR_INFO = "error_info"
 
-        private const val ERROR_EMAIL_ADDRESS = "crashreport@newpipe.schabi.org"
+        private const val ERROR_EMAIL_ADDRESS = "amitpadhan525@gmail.com"
         private const val ERROR_EMAIL_SUBJECT = "Exception in "
 
-        private const val ERROR_GITHUB_ISSUE_URL = "https://github.com/TeamNewPipe/NewPipe/issues"
+        private const val ERROR_GITHUB_ISSUE_URL = "https://github.com/Bit-manipulators/youtube-without-ads/issues"
     }
 }

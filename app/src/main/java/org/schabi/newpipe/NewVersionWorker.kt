@@ -36,12 +36,24 @@ class NewVersionWorker(
      * @param apkLocationUrl Url with the new apk
      * @param versionCode    Code of new version
      */
+    private fun isNewerVersion(remote: String, local: String): Boolean {
+        val rParts = remote.removePrefix("v").split(".").mapNotNull { it.toIntOrNull() }
+        val lParts = local.removePrefix("v").split(".").mapNotNull { it.toIntOrNull() }
+        val maxLen = maxOf(rParts.size, lParts.size)
+        for (i in 0 until maxLen) {
+            val r = rParts.getOrElse(i) { 0 }
+            val l = lParts.getOrElse(i) { 0 }
+            if (r > l) return true
+            if (r < l) return false
+        }
+        return false
+    }
+
     private fun compareAppVersionAndShowNotification(
         versionName: String,
-        apkLocationUrl: String?,
-        versionCode: Int
+        apkLocationUrl: String?
     ) {
-        if (BuildConfig.VERSION_CODE >= versionCode) {
+        if (!isNewerVersion(versionName, BuildConfig.VERSION_NAME)) {
             if (inputData.getBoolean(IS_MANUAL, false)) {
                 // Show toast stating that the app is up-to-date if the update check was manual.
                 ContextCompat.getMainExecutor(applicationContext).execute {
@@ -56,7 +68,7 @@ class NewVersionWorker(
         }
 
         // A pending intent to open the apk location url in the browser.
-        val intent = Intent(Intent.ACTION_VIEW, apkLocationUrl?.toUri())
+        val intent = Intent(Intent.ACTION_VIEW, (apkLocationUrl ?: GITHUB_RELEASES_LATEST_PAGE).toUri())
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val pendingIntent = PendingIntentCompat.getActivity(
             applicationContext,
@@ -71,15 +83,8 @@ class NewVersionWorker(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .setContentTitle(
-                applicationContext.getString(R.string.app_update_available_notification_title)
-            )
-            .setContentText(
-                applicationContext.getString(
-                    R.string.app_update_available_notification_text,
-                    versionName
-                )
-            )
+            .setContentTitle("AdFreeYT Update Available")
+            .setContentText("Version $versionName is available. Tap to update with zero data loss.")
 
         val notificationManager = NotificationManagerCompat.from(applicationContext)
         if (notificationManager.areNotificationsEnabled()) {
@@ -104,16 +109,14 @@ class NewVersionWorker(
             }
         }
 
-        // Make a network request to get latest NewPipe data.
-        val response = DownloaderImpl.getInstance().get(NEWPIPE_API_URL)
+        // Make a network request to get latest AdFreeYT release data from GitHub.
+        val response = DownloaderImpl.getInstance().get(GITHUB_RELEASES_API_URL)
         handleResponse(response)
     }
 
     private fun handleResponse(response: Response) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         try {
-            // Store a timestamp which needs to be exceeded,
-            // before a new request to the API is made.
             val newExpiry = ReleaseVersionUtil.coerceUpdateCheckExpiry(response.getHeader("expires"))
             prefs.edit {
                 putLong(applicationContext.getString(R.string.update_expiry_key), newExpiry)
@@ -124,21 +127,30 @@ class NewVersionWorker(
             }
         }
 
-        // Parse the json from the response.
+        // Parse the GitHub Releases JSON response
         try {
-            val newpipeVersionInfo = JsonParser.`object`()
-                .from(response.responseBody()).getObject("flavors")
-                .getObject("newpipe")
+            val releaseObj = JsonParser.`object`().from(response.responseBody())
+            val tagName = releaseObj.getString("tag_name") ?: return
+            val cleanVersion = tagName.removePrefix("v").trim()
 
-            val versionName = newpipeVersionInfo.getString("version")
-            val versionCode = newpipeVersionInfo.getInt("version_code")
-            val apkLocationUrl = newpipeVersionInfo.getString("apk")
-            compareAppVersionAndShowNotification(versionName, apkLocationUrl, versionCode)
-        } catch (e: JsonParserException) {
-            // Most likely something is wrong in data received from NEWPIPE_API_URL.
-            // Do not alarm user and fail silently.
+            var apkUrl: String? = null
+            val assets = releaseObj.getArray("assets")
+            if (assets != null) {
+                for (i in 0 until assets.size) {
+                    val asset = assets.getObject(i)
+                    val name = asset.getString("name") ?: ""
+                    if (name.endsWith(".apk")) {
+                        apkUrl = asset.getString("browser_download_url")
+                        if (name.contains(cleanVersion)) {
+                            break
+                        }
+                    }
+                }
+            }
+            compareAppVersionAndShowNotification(cleanVersion, apkUrl)
+        } catch (e: Exception) {
             if (DEBUG) {
-                Log.w(TAG, "Could not get NewPipe API: invalid json", e)
+                Log.w(TAG, "Could not parse GitHub release API: invalid json", e)
             }
         }
     }
@@ -148,7 +160,7 @@ class NewVersionWorker(
             checkNewVersion()
             Result.success()
         } catch (e: IOException) {
-            Log.w(TAG, "Could not fetch NewPipe API: probably network problem", e)
+            Log.w(TAG, "Could not fetch GitHub API: probably network problem", e)
             Result.failure()
         } catch (e: ReCaptchaException) {
             Log.e(TAG, "ReCaptchaException should never happen here.", e)
@@ -159,7 +171,8 @@ class NewVersionWorker(
     companion object {
         private val DEBUG = MainActivity.DEBUG
         private val TAG = NewVersionWorker::class.java.simpleName
-        private const val NEWPIPE_API_URL = "https://newpipe.net/api/data.json"
+        private const val GITHUB_RELEASES_API_URL = "https://api.github.com/repos/Bit-manipulators/youtube-without-ads/releases/latest"
+        private const val GITHUB_RELEASES_LATEST_PAGE = "https://github.com/Bit-manipulators/youtube-without-ads/releases/latest"
         private const val IS_MANUAL = "isManual"
 
         /**

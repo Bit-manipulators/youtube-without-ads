@@ -209,11 +209,49 @@ public class MainActivity extends AppCompatActivity {
                 if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
                     toolbarLayoutBinding.getRoot().setPadding(0, statusBarHeight, 0, 0);
                 }
+                if (mainBinding.bottomDockContainer != null) {
+                    final int baseMargin = (int) android.util.TypedValue.applyDimension(
+                            android.util.TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
+                    final int navBottom = navInsets != null ? navInsets.bottom : 0;
+                    final ViewGroup.MarginLayoutParams lp =
+                            (ViewGroup.MarginLayoutParams) mainBinding.bottomDockContainer.getLayoutParams();
+                    if (lp != null) {
+                        lp.bottomMargin = baseMargin + navBottom;
+                        mainBinding.bottomDockContainer.setLayoutParams(lp);
+                    }
+                }
             } catch (final Exception e) {
                 Log.e(TAG, "Error applying window insets", e);
             }
             return windowInsets;
         });
+
+        if (mainBinding.mainTabLayout != null) {
+            mainBinding.mainTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(final TabLayout.Tab tab) {
+                    final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
+                    if (!(currentFrag instanceof MainFragment)) {
+                        NavigationHelper.gotoMainFragment(getSupportFragmentManager());
+                        final Fragment mainFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
+                        if (mainFrag instanceof MainFragment) {
+                            ((MainFragment) mainFrag).setSelectedTab(tab.getPosition());
+                        }
+                    }
+                }
+
+                @Override
+                public void onTabUnselected(final TabLayout.Tab tab) { }
+
+                @Override
+                public void onTabReselected(final TabLayout.Tab tab) {
+                    final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
+                    if (!(currentFrag instanceof MainFragment)) {
+                        NavigationHelper.gotoMainFragment(getSupportFragmentManager());
+                    }
+                }
+            });
+        }
 
         updateToolbarBranding(false);
 
@@ -254,13 +292,8 @@ public class MainActivity extends AppCompatActivity {
                                 setBarsVisible(false);
                             } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
                                     || newState == BottomSheetBehavior.STATE_HIDDEN) {
-                                final Fragment fragment = getSupportFragmentManager()
-                                        .findFragmentById(R.id.fragment_holder);
-                                if (fragment instanceof MainFragment) {
-                                    final View bottomBar = ((MainFragment) fragment).getBottomBar();
-                                    if (bottomBar != null) {
-                                        bottomBar.setTranslationY(0f);
-                                    }
+                                if (mainBinding.bottomDockContainer != null) {
+                                    mainBinding.bottomDockContainer.setTranslationY(0f);
                                 }
                                 setBarsVisible(true);
                             }
@@ -272,20 +305,15 @@ public class MainActivity extends AppCompatActivity {
                                 if (Float.isNaN(slideOffset) || Float.isInfinite(slideOffset)) {
                                     return;
                                 }
-                                final Fragment fragment = getSupportFragmentManager()
-                                        .findFragmentById(R.id.fragment_holder);
-                                if (fragment instanceof MainFragment) {
-                                    final View bottomBar = ((MainFragment) fragment).getBottomBar();
-                                    if (bottomBar != null && slideOffset >= 0) {
-                                        final int bottomMargin = bottomBar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
-                                                ? ((ViewGroup.MarginLayoutParams) bottomBar.getLayoutParams()).bottomMargin : 0;
-                                        final int bottomHeight = (bottomBar.getHeight() > 0
-                                                ? bottomBar.getHeight()
-                                                : (int) android.util.TypedValue.applyDimension(
-                                                        android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
-                                                        getResources().getDisplayMetrics())) + bottomMargin;
-                                        bottomBar.setTranslationY(bottomHeight * slideOffset);
-                                    }
+                                if (mainBinding.bottomDockContainer != null && slideOffset >= 0) {
+                                    final int bottomMargin = mainBinding.bottomDockContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
+                                            ? ((ViewGroup.MarginLayoutParams) mainBinding.bottomDockContainer.getLayoutParams()).bottomMargin : 0;
+                                    final int bottomHeight = (mainBinding.bottomDockContainer.getHeight() > 0
+                                            ? mainBinding.bottomDockContainer.getHeight()
+                                            : (int) android.util.TypedValue.applyDimension(
+                                                    android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
+                                                    getResources().getDisplayMetrics())) + bottomMargin;
+                                    mainBinding.bottomDockContainer.setTranslationY((bottomHeight + 30) * slideOffset);
                                 }
                             } catch (final Exception e) {
                                 Log.e(TAG, "Error in bottom sheet onSlide", e);
@@ -323,14 +351,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPostCreate(savedInstanceState);
 
         final App app = App.getInstance();
-
-        if (sharedPreferences.getBoolean(app.getString(R.string.update_app_key), false)
-                && sharedPreferences
-                .getBoolean(app.getString(R.string.update_check_consent_key), false)) {
-            // Start the worker which is checking all conditions
-            // and eventually searching for a new version.
-            NewVersionWorker.enqueueNewVersionCheckingWork(app, false);
-        }
+        NewVersionWorker.enqueueNewVersionCheckingWork(app, false);
     }
 
     @Override
@@ -918,33 +939,37 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Animate Bottom Bar (Main Tab Layout in MainFragment)
-        final Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
-        if (fragment instanceof MainFragment) {
-            final View bottomBar = ((MainFragment) fragment).getBottomBar();
-            if (bottomBar != null) {
-                bottomBar.animate().cancel();
-                final int bottomMargin = bottomBar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
-                        ? ((ViewGroup.MarginLayoutParams) bottomBar.getLayoutParams()).bottomMargin : 0;
-                final int bottomHeight = (bottomBar.getHeight() > 0
-                        ? bottomBar.getHeight()
-                        : (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
-                                getResources().getDisplayMetrics())) + bottomMargin;
-                if (visible) {
-                    bottomBar.animate()
-                            .translationY(0f)
-                            .setDuration(250)
-                            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
-                            .start();
-                } else {
-                    bottomBar.animate()
-                            .translationY(bottomHeight)
-                            .setDuration(250)
-                            .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
-                            .start();
-                }
+        // Animate Bottom Dock
+        if (mainBinding.bottomDockContainer != null) {
+            mainBinding.bottomDockContainer.animate().cancel();
+            final int bottomMargin = mainBinding.bottomDockContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
+                    ? ((ViewGroup.MarginLayoutParams) mainBinding.bottomDockContainer.getLayoutParams()).bottomMargin : 0;
+            final int bottomHeight = (mainBinding.bottomDockContainer.getHeight() > 0
+                    ? mainBinding.bottomDockContainer.getHeight()
+                    : (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
+                            getResources().getDisplayMetrics())) + bottomMargin;
+            if (visible) {
+                mainBinding.bottomDockContainer.animate()
+                        .translationY(0f)
+                        .setDuration(250)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
+                        .start();
+            } else {
+                mainBinding.bottomDockContainer.animate()
+                        .translationY(bottomHeight + 30)
+                        .setDuration(250)
+                        .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+                        .start();
             }
         }
+    }
+
+    public org.schabi.newpipe.views.ScrollableTabLayout getMainTabLayout() {
+        return mainBinding != null ? mainBinding.mainTabLayout : null;
+    }
+
+    public FrameLayout getBottomDockContainer() {
+        return mainBinding != null ? mainBinding.bottomDockContainer : null;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
