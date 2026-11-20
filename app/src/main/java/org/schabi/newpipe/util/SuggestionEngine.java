@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 
 import org.schabi.newpipe.App;
 import org.schabi.newpipe.NewPipeDatabase;
+import org.schabi.newpipe.database.AppDatabase;
 import org.schabi.newpipe.database.history.model.StreamHistoryEntry;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.kiosk.KioskInfo;
@@ -135,7 +136,7 @@ public final class SuggestionEngine {
         try {
             final App app = App.getInstance();
             if (app != null) {
-                final NewPipeDatabase db = NewPipeDatabase.getInstance(app);
+                final AppDatabase db = NewPipeDatabase.getInstance(app);
 
                 // 1. Unique search history queries
                 final List<String> searches = db.searchHistoryDAO()

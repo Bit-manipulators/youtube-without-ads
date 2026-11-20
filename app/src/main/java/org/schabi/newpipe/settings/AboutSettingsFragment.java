@@ -10,7 +10,7 @@ public class AboutSettingsFragment extends BasePreferenceFragment {
 
     @Override
     public void onCreatePreferences(final Bundle savedInstanceState, final String rootKey) {
-        super.onCreatePreferences(savedInstanceState, rootKey);
+        addPreferencesFromResourceRegistry();
 
         final Preference orgPref = findPreference("about_organization");
         if (orgPref != null) {
