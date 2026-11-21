@@ -583,15 +583,41 @@
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="0dp"
+            android:paddingBottom="72dp"
+            android:clipToPadding="false"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tab_layout"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:visibility="gone"
-            tools:visibility="gone" />
+        <!-- Floating Glassmorphism Detail Dock: Video, Description, Comments -->
+        <FrameLayout
+            android:id="@+id/detail_dock_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="12dp"
+            android:background="?attr/glass_dock_drawable"
+            android:elevation="12dp"
+            android:padding="3dp"
+            android:visibility="visible">
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout"
+                android:layout_width="220dp"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                app:tabGravity="fill"
+                app:tabBackground="@drawable/bg_dock_tab_ripple"
+                app:tabIndicator="?attr/glass_tab_indicator_drawable"
+                app:tabIndicatorColor="@android:color/transparent"
+                app:tabIndicatorAnimationMode="elastic"
+                app:tabIndicatorGravity="center"
+                app:tabIndicatorHeight="40dp"
+                app:tabIndicatorFullWidth="false"
+                app:tabMinWidth="60dp"
+                app:tabMode="fixed"
+                app:tabRippleColor="@android:color/transparent"
+                app:tabTextAppearance="@style/BottomNavTabTextAppearance" />
+
+        </FrameLayout>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

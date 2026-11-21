@@ -187,22 +187,22 @@ public final class MainPlayerUi extends VideoPlayerUi implements View.OnLayoutCh
 
         binding.getRoot().addOnLayoutChangeListener(this);
 
-        // fitsSystemWindows only pads the controls by the system bars, but with gesture navigation
-        // the system reserves a taller area at the bottom for its gestures. In fullscreen, keep
-        // the controls out of that area, otherwise dragging the seekbar triggers system gestures.
+        // In fullscreen, pad controls by status bar at the top and gesture navigation at the bottom.
+        // When playing on top (portrait), keep top padding 0 to eliminate empty spaces at the top.
         ViewCompat.setOnApplyWindowInsetsListener(binding.playbackControlRoot,
                 (view, windowInsets) -> {
-                    final WindowInsetsCompat result =
-                            ViewCompat.onApplyWindowInsets(view, windowInsets);
                     if (isFullscreen) {
+                        final androidx.core.graphics.Insets status =
+                                windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                        final int top = status != null ? status.top : 0;
                         final int gestureBottom = windowInsets.getInsets(
                                 WindowInsetsCompat.Type.mandatorySystemGestures()).bottom;
-                        if (gestureBottom > view.getPaddingBottom()) {
-                            view.setPadding(view.getPaddingLeft(), view.getPaddingTop(),
-                                    view.getPaddingRight(), gestureBottom);
-                        }
+                        view.setPadding(view.getPaddingLeft(), top,
+                                view.getPaddingRight(), gestureBottom);
+                    } else {
+                        view.setPadding(0, 0, 0, 0);
                     }
-                    return result;
+                    return windowInsets;
                 });
 
         binding.moreOptionsButton.setOnLongClickListener(v -> {

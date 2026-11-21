@@ -55,6 +55,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainFragment extends BaseFragment implements TabLayout.OnTabSelectedListener {
+    private static int pendingTabPosition = -1;
+
+    public static void setPendingTab(final int position) {
+        pendingTabPosition = position;
+    }
+
     private FragmentMainBinding binding;
     private SelectedTabsPagerAdapter pagerAdapter;
 
@@ -118,6 +124,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         super.initViews(rootView, savedInstanceState);
 
         binding = FragmentMainBinding.bind(rootView);
+        binding.pager.setOffscreenPageLimit(4);
 
         final ScrollableTabLayout tabLayout = getTabLayout();
         if (tabLayout != null) {
@@ -148,9 +155,15 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         if (tabLayout != null) {
             updateTabsIconAndDescription();
             if (binding != null && binding.pager != null) {
-                final TabLayout.Tab tab = tabLayout.getTabAt(binding.pager.getCurrentItem());
-                if (tab != null && !tab.isSelected()) {
-                    tab.select();
+                if (pendingTabPosition >= 0) {
+                    final int target = pendingTabPosition;
+                    pendingTabPosition = -1;
+                    setSelectedTab(target);
+                } else {
+                    final TabLayout.Tab tab = tabLayout.getTabAt(binding.pager.getCurrentItem());
+                    if (tab != null && !tab.isSelected()) {
+                        tab.select();
+                    }
                 }
             }
         }
@@ -221,10 +234,8 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         if (pagerAdapter == null || !pagerAdapter.sameTabs(tabsList)) {
             pagerAdapter = new SelectedTabsPagerAdapter(requireContext(),
                     getChildFragmentManager(), tabsList);
+            binding.pager.setAdapter(pagerAdapter);
         }
-
-        binding.pager.setAdapter(null);
-        binding.pager.setAdapter(pagerAdapter);
 
         updateTabsIconAndDescription();
         updateTitleForTab(binding.pager.getCurrentItem());

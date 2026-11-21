@@ -39,7 +39,7 @@ class MainPlayerGestureListener(
         }
         return when (event.action) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                v.parent?.requestDisallowInterceptTouchEvent(playerUi.isFullscreen)
+                v.parent?.requestDisallowInterceptTouchEvent(playerUi.isFullscreen || isMoving)
                 true
             }
 
@@ -164,16 +164,52 @@ class MainPlayerGestureListener(
         }
     }
 
+    override fun onFling(
+        e1: MotionEvent?,
+        e2: MotionEvent,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
+        if (e1 != null) {
+            val diffY = e2.y - e1.y
+            val diffX = e2.x - e1.x
+            if (abs(diffY) > abs(diffX) && abs(diffY) > 60 && abs(velocityY) > 100) {
+                if (diffY < 0 && !playerUi.isFullscreen) {
+                    // Swiping up when not in fullscreen -> make full screen
+                    playerUi.toggleFullscreen()
+                    return true
+                } else if (diffY > 0 && playerUi.isFullscreen) {
+                    // Swiping down when in fullscreen -> rotate video to normal / exit fullscreen
+                    playerUi.toggleFullscreen()
+                    return true
+                }
+            }
+        }
+        return super.onFling(e1, e2, velocityX, velocityY)
+    }
+
     override fun onScroll(
         initialEvent: MotionEvent?,
         movingEvent: MotionEvent,
         distanceX: Float,
         distanceY: Float
     ): Boolean {
-        if (initialEvent == null || !playerUi.isFullscreen) {
+        if (initialEvent == null) {
             return false
         }
 
+        // When NOT in fullscreen: swipe up to enter fullscreen
+        if (!playerUi.isFullscreen) {
+            val diffY = initialEvent.y - movingEvent.y
+            val diffX = movingEvent.x - initialEvent.x
+            if (diffY > 50 && abs(diffY) > abs(diffX)) {
+                playerUi.toggleFullscreen()
+                return true
+            }
+            return false
+        }
+
+        // In fullscreen:
         // Calculate heights of status and navigation bars
         val statusBarHeight = getAndroidDimenPx(player.context, "status_bar_height")
         val navigationBarHeight = getAndroidDimenPx(player.context, "navigation_bar_height")
@@ -195,22 +231,27 @@ class MainPlayerGestureListener(
 
         isMoving = true
 
-        // -- Brightness and Volume control --
-        if (getDisplayHalfPortion(initialEvent) == DisplayPortion.RIGHT_HALF) {
-            when (PlayerHelper.getActionForRightGestureSide(player.context)) {
-                player.context.getString(R.string.volume_control_key) ->
-                    onScrollVolume(distanceY)
-
-                player.context.getString(R.string.brightness_control_key) ->
-                    onScrollBrightness(distanceY)
+        // Full screen: divide screen into 3 parts:
+        // 1st part (Left 1/3): brightness
+        // 2nd part (Middle 1/3): minimizing (swiping down minimizes/rotates back to normal)
+        // 3rd part (Right 1/3): volume
+        val portion = getDisplayPortion(initialEvent)
+        when (portion) {
+            DisplayPortion.LEFT -> {
+                onScrollBrightness(distanceY)
             }
-        } else {
-            when (PlayerHelper.getActionForLeftGestureSide(player.context)) {
-                player.context.getString(R.string.volume_control_key) ->
-                    onScrollVolume(distanceY)
-
-                player.context.getString(R.string.brightness_control_key) ->
-                    onScrollBrightness(distanceY)
+            DisplayPortion.MIDDLE -> {
+                val diffY = movingEvent.y - initialEvent.y
+                if (diffY > 50) {
+                    playerUi.toggleFullscreen()
+                    isMoving = false
+                }
+            }
+            DisplayPortion.RIGHT -> {
+                onScrollVolume(distanceY)
+            }
+            else -> {
+                onScrollVolume(distanceY)
             }
         }
 

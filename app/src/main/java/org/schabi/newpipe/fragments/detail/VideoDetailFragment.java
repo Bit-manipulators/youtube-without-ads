@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.content.pm.ActivityInfo;
 import android.database.ContentObserver;
 import android.graphics.Color;
@@ -664,6 +665,25 @@ public final class VideoDetailFragment
         binding.viewPager.setAdapter(pageAdapter);
         binding.tabLayout.setupWithViewPager(binding.viewPager);
 
+        binding.tabLayout.setSelectedTabIndicatorGravity(TabLayout.INDICATOR_GRAVITY_CENTER);
+        final int indicatorHeight = (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 40, getResources().getDisplayMetrics());
+        binding.tabLayout.setSelectedTabIndicatorHeight(indicatorHeight);
+        binding.tabLayout.setBackgroundColor(Color.TRANSPARENT);
+        final int selectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
+                android.R.attr.textColorPrimary);
+        final int unselectedColor = ThemeHelper.resolveColorFromAttr(requireContext(),
+                android.R.attr.textColorSecondary);
+        final int[][] states = new int[][]{
+                new int[]{android.R.attr.state_selected},
+                new int[]{}
+        };
+        final int[] colors = new int[]{selectedColor, unselectedColor};
+        final ColorStateList tabColors = new ColorStateList(states, colors);
+        binding.tabLayout.setTabIconTint(tabColors);
+        binding.tabLayout.setTabTextColors(unselectedColor, selectedColor);
+        binding.tabLayout.setTabRippleColor(null);
+
         binding.detailThumbnailRootLayout.requestFocus();
 
         binding.detailControlsPlayWithKodi.setVisibility(
@@ -959,18 +979,18 @@ public final class VideoDetailFragment
             tabContentDescriptions.add(R.string.related_items_tab_description);
         }
 
-        if (shouldShowComments()) {
-            pageAdapter.addFragment(
-                    CommentsFragment.getInstance(serviceId, url, title), COMMENTS_TAB_TAG);
-            tabIcons.add(R.drawable.ic_comment);
-            tabContentDescriptions.add(R.string.comments_tab_description);
-        }
-
         if (showDescription) {
             // temp empty fragment. will be updated in handleResult
             pageAdapter.addFragment(EmptyFragment.newInstance(false), DESCRIPTION_TAB_TAG);
             tabIcons.add(R.drawable.ic_description);
             tabContentDescriptions.add(R.string.description_tab_description);
+        }
+
+        if (shouldShowComments()) {
+            pageAdapter.addFragment(
+                    CommentsFragment.getInstance(serviceId, url, title), COMMENTS_TAB_TAG);
+            tabIcons.add(R.drawable.ic_comment);
+            tabContentDescriptions.add(R.string.comments_tab_description);
         }
 
         if (pageAdapter.getCount() == 0) {
@@ -1000,6 +1020,7 @@ public final class VideoDetailFragment
             final TabLayout.Tab tab = binding.tabLayout.getTabAt(i);
             if (tab != null) {
                 tab.setIcon(tabIcons.get(i));
+                tab.setText(null);
                 tab.setContentDescription(tabContentDescriptions.get(i));
             }
         }
@@ -1036,7 +1057,11 @@ public final class VideoDetailFragment
         if (binding == null) {
             return;
         }
-        binding.tabLayout.setVisibility(View.GONE);
+        final boolean visible = !isFullscreen() && pageAdapter != null && pageAdapter.getCount() > 1;
+        if (binding.detailDockContainer != null) {
+            binding.detailDockContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        binding.tabLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     public void scrollToTop() {

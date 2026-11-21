@@ -3,15 +3,15 @@
 # 🎬 AdFreeYT
 
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk">
-  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.8 APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk">
+  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.9 APK"/>
 </a>
 
 <br/>
 <br/>
 
 <!-- OFFICIAL STORE / GITHUB BADGES -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk">
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk">
   <img src="assets/badges/download-android-apk.svg" height="60" alt="Download Android APK"/>
 </a>
 &nbsp;&nbsp;
@@ -95,18 +95,18 @@
 
 ---
 
-## 🚀 What's New in v4.8
+## 🚀 What's New in v4.9
 
-- **Smart Personalized Feed**: Recommendations dynamically tailored to your actual search and watch history with endless continuous scrolling.
-- **Instant Video Playback**: Low-latency startup buffer (250ms) eliminating video start buffering delays.
-- **Integrated High-Performance Cache**: Automatic OkHttp HTTP disk cache and Coil image caching for instant thumbnail and page loading.
-- **New "About Us" Settings**: Meet the Bit-manipulators organization and creator/maintainer Amit Padhan (@amitpadhan525).
-- **Brand Identity & App Package**: Official application ID updated to `com.bitmanipulators.adfreeyt`.
-- **UI & Layout Refinements**:
-  - Compact centered bottom dock with oval-shaped click ripple animations.
-  - Resolved top bar overlap on home feed with dynamic system window insets.
-  - Eliminated dead space between search bar and suggestions list.
-  - Elevated and bounded floating mini-player preventing dock overlap.
+- **Video Detail Dock**: New glass floating dock with quick tabs for current running video content (Video / Related, Description, and Comments).
+- **Fullscreen Swipe Gestures**: Swipe up on any video to enter fullscreen; swipe down in fullscreen to rotate back to normal.
+- **3-Zone Fullscreen Controls**: Screen partitioned into three intuitive touch zones:
+  - Left 1/3: Brightness adjustments.
+  - Middle 1/3: Minimizing and exiting fullscreen on downward swipe.
+  - Right 1/3: Volume adjustments.
+- **Search Navigation & Back Button**: Added dedicated back arrow to search bar and fixed back navigation across search suggestions and results.
+- **Tab Navigation Glitch Fix**: Fixed multi-tab triggering and unexpected redirects when switching tabs from the search page.
+- **Instant Feed Tab Switching**: Kept feed page cached in memory when switching to history and back, completely eliminating unnecessary reloading.
+- **Controller Spacing Fix**: Resolved empty top spacing in portrait video controller.
 
 ---
 
@@ -114,8 +114,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_v4.8.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_v4.9.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -124,10 +124,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_v4.8.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.8.apk
+curl -L -o AdFreeYT_v4.9.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_v4.8.apk
+termux-open AdFreeYT_v4.9.apk
 ```
 
 ---

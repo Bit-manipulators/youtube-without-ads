@@ -244,11 +244,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onTabSelected(final TabLayout.Tab tab) {
                     final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
                     if (!(currentFrag instanceof MainFragment)) {
+                        MainFragment.setPendingTab(tab.getPosition());
                         NavigationHelper.gotoMainFragment(getSupportFragmentManager());
-                        final Fragment mainFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
-                        if (mainFrag instanceof MainFragment) {
-                            ((MainFragment) mainFrag).setSelectedTab(tab.getPosition());
-                        }
+                    } else {
+                        ((MainFragment) currentFrag).setSelectedTab(tab.getPosition());
                     }
                 }
 
@@ -259,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onTabReselected(final TabLayout.Tab tab) {
                     final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
                     if (!(currentFrag instanceof MainFragment)) {
+                        MainFragment.setPendingTab(tab.getPosition());
                         NavigationHelper.gotoMainFragment(getSupportFragmentManager());
                     }
                 }
@@ -838,6 +838,8 @@ public class MainActivity extends AppCompatActivity {
             // and no other CommentRepliesFragments are on top of the back stack
             // to show the top level comments again.
             openDetailFragmentFromCommentReplies(fm, true);
+        } else if (fragment instanceof SearchFragment) {
+            NavigationHelper.gotoMainFragment(fm);
         } else if (!NavigationHelper.tryGotoSearchFragment(fm)) {
             // If search fragment wasn't found in the backstack go to the main fragment
             NavigationHelper.gotoMainFragment(fm);

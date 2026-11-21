@@ -176,6 +176,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
     private FragmentSearchBinding searchBinding;
 
     private View searchToolbarContainer;
+    private View searchBack;
     private EditText searchEditText;
     private View searchClear;
 
@@ -438,6 +439,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         }).attachToRecyclerView(searchBinding.suggestionsList);
 
         searchToolbarContainer = activity.findViewById(R.id.toolbar_search_container);
+        searchBack = searchToolbarContainer.findViewById(R.id.toolbar_search_back);
         searchEditText = searchToolbarContainer.findViewById(R.id.toolbar_search_edit_text);
         searchClear = searchToolbarContainer.findViewById(R.id.toolbar_search_clear);
     }
@@ -606,6 +608,14 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         if (DEBUG) {
             Log.d(TAG, "initSearchListeners() called");
         }
+        if (searchBack != null) {
+            searchBack.setOnClickListener(v -> {
+                hideKeyboardSearch();
+                NavigationHelper.gotoMainFragment(getFM());
+            });
+            TooltipCompat.setTooltipText(searchBack, getString(R.string.back));
+        }
+
         searchClear.setOnClickListener(v -> {
             if (DEBUG) {
                 Log.d(TAG, "onClick() called with: v = [" + v + "]");
@@ -723,6 +733,9 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         if (DEBUG) {
             Log.d(TAG, "unsetSearchListeners() called");
         }
+        if (searchBack != null) {
+            searchBack.setOnClickListener(null);
+        }
         searchClear.setOnClickListener(null);
         searchClear.setOnLongClickListener(null);
         searchEditText.setOnClickListener(null);
@@ -794,15 +807,18 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
 
     @Override
     public boolean onBackPressed() {
-        if (suggestionsPanelVisible
-                && !infoListAdapter.getItemsList().isEmpty()
-                && !isLoading.get()) {
+        if (suggestionsPanelVisible) {
             hideSuggestionsPanel();
             hideKeyboardSearch();
-            searchEditText.setText(lastSearchedString);
+            if (!infoListAdapter.getItemsList().isEmpty()) {
+                searchEditText.setText(lastSearchedString);
+                return true;
+            }
+            NavigationHelper.gotoMainFragment(getFM());
             return true;
         }
-        return false;
+        NavigationHelper.gotoMainFragment(getFM());
+        return true;
     }
 
 
