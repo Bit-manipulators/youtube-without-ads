@@ -2195,7 +2195,7 @@ public final class VideoDetailFragment
         }
     }
 
-    private boolean isFullscreen() {
+    public boolean isFullscreen() {
         return isPlayerAvailable() && player.UIs().get(VideoPlayerUi.class)
                 .map(VideoPlayerUi::isFullscreen).orElse(false);
     }
