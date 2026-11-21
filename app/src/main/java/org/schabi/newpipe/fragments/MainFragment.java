@@ -454,7 +454,7 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
             try {
                 super.restoreState(state, loader);
             } catch (final Exception e) {
-                Log.w(TAG, "Failed to restore state for SelectedTabsPagerAdapter", e);
+                Log.w("SelectedTabsPagerAdapter", "Failed to restore state", e);
             }
         }
     }
