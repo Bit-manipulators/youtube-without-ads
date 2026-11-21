@@ -921,4 +921,5 @@
     <string name="about_creator_title">Creator &amp; Maintainer</string>
     <string name="about_creator_summary">Amit Padhan (@amitpadhan525)\nhttps://github.com/amitpadhan525</string>
     <string name="about_github_title">Source Code &amp; Issues</string>
+    <string name="back">Back</string>
 </resources>
