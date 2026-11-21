@@ -212,7 +212,13 @@ public class ReCaptchaActivity extends AppCompatActivity {
     private void addYoutubeCookies(@NonNull final String cookies) {
         if (cookies.contains("s_gl=") || cookies.contains("goojf=")
                 || cookies.contains("VISITOR_INFO1_LIVE=")
-                || cookies.contains("GOOGLE_ABUSE_EXEMPTION=")) {
+                || cookies.contains("GOOGLE_ABUSE_EXEMPTION=")
+                || cookies.contains("LOGIN_INFO=")
+                || cookies.contains("HSID=")
+                || cookies.contains("SSID=")
+                || cookies.contains("APISID=")
+                || cookies.contains("SAPISID=")
+                || cookies.contains("SID=")) {
             // youtube seems to also need the other cookies:
             addCookie(cookies);
         }

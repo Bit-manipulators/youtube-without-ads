@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -445,6 +446,16 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
 
         public boolean sameTabs(final List<Tab> tabsToCompare) {
             return internalTabsList.equals(tabsToCompare);
+        }
+
+        @Override
+        public void restoreState(@Nullable final Parcelable state,
+                                 @Nullable final ClassLoader loader) {
+            try {
+                super.restoreState(state, loader);
+            } catch (final Exception e) {
+                Log.w(TAG, "Failed to restore state for SelectedTabsPagerAdapter", e);
+            }
         }
     }
 }

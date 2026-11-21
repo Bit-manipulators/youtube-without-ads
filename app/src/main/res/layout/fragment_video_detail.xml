@@ -597,7 +597,8 @@
             android:background="?attr/glass_dock_drawable"
             android:elevation="12dp"
             android:padding="3dp"
-            android:visibility="visible">
+            android:visibility="visible"
+            app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior">
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_layout"

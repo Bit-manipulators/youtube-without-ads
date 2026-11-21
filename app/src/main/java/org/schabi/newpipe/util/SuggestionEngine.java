@@ -274,72 +274,36 @@ public final class SuggestionEngine {
             }
 
             final String topic1 = getNextSuggestionTopic();
-            final String topic2 = getNextSuggestionTopic();
-            final Single<List<StreamInfoItem>> q1 = fetchVideosForQuery(serviceId, topic1)
-                    .onErrorReturnItem(Collections.emptyList());
-            final Single<List<StreamInfoItem>> q2 = fetchVideosForQuery(serviceId, topic2)
-                    .onErrorReturnItem(Collections.emptyList());
+            return fetchVideosForQuery(serviceId, topic1)
+                    .onErrorReturnItem(Collections.emptyList())
+                    .map(list1 -> {
+                        final List<StreamInfoItem> result = new ArrayList<>(buffered);
+                        final List<StreamInfoItem> extra = new ArrayList<>();
 
-            return Single.zip(q1, q2, (list1, list2) -> {
-                final List<StreamInfoItem> result = new ArrayList<>(buffered);
-                final List<StreamInfoItem> extra = new ArrayList<>();
-
-                final List<StreamInfoItem> combined = new ArrayList<>();
-                if (list1 != null) {
-                    combined.addAll(list1);
-                }
-                if (list2 != null) {
-                    combined.addAll(list2);
-                }
-
-                for (final StreamInfoItem item : combined) {
-                    if (item != null && item.getUrl() != null) {
-                        if (seenUrls == null || seenUrls.add(item.getUrl())) {
-                            if (result.size() < limit) {
-                                result.add(item);
-                            } else {
-                                extra.add(item);
-                            }
-                        }
-                    }
-                }
-
-                if (!extra.isEmpty()) {
-                    synchronized (RECOMMENDATION_BUFFER) {
-                        if (RECOMMENDATION_BUFFER.size() < 100) {
-                            RECOMMENDATION_BUFFER.addAll(extra);
-                        }
-                    }
-                }
-
-                // If still fewer than 10 items, fall back to trending kiosk items
-                if (result.size() < 10) {
-                    try {
-                        final org.schabi.newpipe.extractor.kiosk.KioskList kioskList =
-                                org.schabi.newpipe.extractor.NewPipe.getService(serviceId).getKioskList();
-                        final String kioskId = kioskList.getDefaultKioskId();
-                        final String kioskUrl = kioskList.getListLinkHandlerFactoryByType(kioskId)
-                                .fromId(kioskId).getUrl();
-                        final KioskInfo kioskInfo = ExtractorHelper.getKioskInfo(serviceId, kioskUrl, false)
-                                .blockingGet();
-                        if (kioskInfo != null && kioskInfo.getRelatedItems() != null) {
-                            for (final StreamInfoItem item : filterLiveStreams(kioskInfo.getRelatedItems())) {
+                        if (list1 != null) {
+                            for (final StreamInfoItem item : list1) {
                                 if (item != null && item.getUrl() != null) {
                                     if (seenUrls == null || seenUrls.add(item.getUrl())) {
-                                        result.add(item);
+                                        if (result.size() < limit) {
+                                            result.add(item);
+                                        } else {
+                                            extra.add(item);
+                                        }
                                     }
-                                }
-                                if (result.size() >= limit) {
-                                    break;
                                 }
                             }
                         }
-                    } catch (final Exception ignored) {
-                    }
-                }
 
-                return result;
-            });
+                        if (!extra.isEmpty()) {
+                            synchronized (RECOMMENDATION_BUFFER) {
+                                if (RECOMMENDATION_BUFFER.size() < 100) {
+                                    RECOMMENDATION_BUFFER.addAll(extra);
+                                }
+                            }
+                        }
+
+                        return result;
+                    });
         }).onErrorReturn(throwable -> {
             Log.w(TAG, "Error fetching recommendations", throwable);
             return Collections.emptyList();

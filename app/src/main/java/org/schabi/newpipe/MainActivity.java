@@ -319,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
                                     toolbarLayoutBinding.getRoot().setVisibility(View.GONE);
                                 }
+                                setGlassStatusBarVisible(false);
                                 setBarsVisible(false);
                             } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
                                     || newState == BottomSheetBehavior.STATE_HIDDEN) {
@@ -821,13 +822,17 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
+        if (getSupportFragmentManager().getBackStackEntryCount() <= 1) {
             if (isFloatingPlayerActive()) {
                 closeFloatingPlayer();
             }
             finish();
         } else {
-            super.onBackPressed();
+            try {
+                super.onBackPressed();
+            } catch (final Exception e) {
+                NavigationHelper.gotoMainFragment(getSupportFragmentManager());
+            }
         }
     }
 

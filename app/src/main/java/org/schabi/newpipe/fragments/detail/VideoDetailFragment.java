@@ -208,12 +208,7 @@ public final class VideoDetailFragment
             return;
         }
         try {
-            if (isFullscreen()) {
-                binding.detailRootLinearLayout.setPadding(0, 0, 0, 0);
-            } else {
-                final int topInset = getStatusBarTopInset();
-                binding.detailRootLinearLayout.setPadding(0, topInset, 0, navBarBottomInset);
-            }
+            binding.detailRootLinearLayout.setPadding(0, 0, 0, 0);
         } catch (final Exception e) {
             Log.e(TAG, "Error updating layout insets", e);
         }
@@ -762,10 +757,13 @@ public final class VideoDetailFragment
         binding.detailControlsPopup.setOnTouchListener(controlsTouchListener);
 
         binding.appBarLayout.addOnOffsetChangedListener((layout, verticalOffset) -> {
-            // prevent useless updates to tab layout visibility if nothing changed
             if (verticalOffset != lastAppBarVerticalOffset) {
+                if (verticalOffset < lastAppBarVerticalOffset) {
+                    setDetailDockVisible(false);
+                } else if (verticalOffset > lastAppBarVerticalOffset || verticalOffset == 0) {
+                    setDetailDockVisible(true);
+                }
                 lastAppBarVerticalOffset = verticalOffset;
-                // the view was scrolled
                 updateTabLayoutVisibility();
             }
         });
@@ -1070,15 +1068,70 @@ public final class VideoDetailFragment
         }
     }
 
+    private boolean isDetailDockVisible = true;
+
+    public void setDetailDockVisible(final boolean visible) {
+        if (binding == null || binding.detailDockContainer == null) {
+            return;
+        }
+        if (isFullscreen() || pageAdapter == null || pageAdapter.getCount() <= 1) {
+            binding.detailDockContainer.setVisibility(View.GONE);
+            isDetailDockVisible = false;
+            return;
+        }
+        if (isDetailDockVisible == visible) {
+            return;
+        }
+        isDetailDockVisible = visible;
+        binding.detailDockContainer.animate().cancel();
+        if (visible) {
+            binding.detailDockContainer.setVisibility(View.VISIBLE);
+            binding.detailDockContainer.animate()
+                    .translationY(0f)
+                    .alpha(1.0f)
+                    .setDuration(200)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+        } else {
+            final int height = binding.detailDockContainer.getHeight() > 0
+                    ? binding.detailDockContainer.getHeight()
+                    : (int) android.util.TypedValue.applyDimension(
+                            android.util.TypedValue.COMPLEX_UNIT_DIP, 60,
+                            getResources().getDisplayMetrics());
+            binding.detailDockContainer.animate()
+                    .translationY(height + 40)
+                    .alpha(0.0f)
+                    .setDuration(200)
+                    .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                    .withEndAction(() -> {
+                        if (binding != null && binding.detailDockContainer != null
+                                && !isDetailDockVisible) {
+                            binding.detailDockContainer.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+        }
+    }
+
     public void updateTabLayoutVisibility() {
         if (binding == null) {
             return;
         }
         final boolean visible = !isFullscreen() && pageAdapter != null && pageAdapter.getCount() > 1;
-        if (binding.detailDockContainer != null) {
-            binding.detailDockContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (!visible) {
+            if (binding.detailDockContainer != null) {
+                binding.detailDockContainer.setVisibility(View.GONE);
+            }
+            binding.tabLayout.setVisibility(View.GONE);
+            isDetailDockVisible = false;
+        } else if (isDetailDockVisible) {
+            if (binding.detailDockContainer != null) {
+                binding.detailDockContainer.setVisibility(View.VISIBLE);
+                binding.detailDockContainer.setTranslationY(0f);
+                binding.detailDockContainer.setAlpha(1.0f);
+            }
+            binding.tabLayout.setVisibility(View.VISIBLE);
         }
-        binding.tabLayout.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     public void scrollToTop() {

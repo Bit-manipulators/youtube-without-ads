@@ -621,11 +621,16 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         if (searchBack != null) {
             searchBack.setOnClickListener(v -> {
                 hideKeyboardSearch();
-                if (activity != null) {
-                    activity.onBackPressed();
-                } else {
-                    NavigationHelper.gotoMainFragment(getFM());
+                hideSuggestionsPanel();
+                final FragmentManager fm = activity != null ? activity.getSupportFragmentManager() : getFM();
+                if (fm != null && fm.getBackStackEntryCount() > 1) {
+                    try {
+                        fm.popBackStack();
+                        return;
+                    } catch (final Exception ignored) {
+                    }
                 }
+                NavigationHelper.gotoMainFragment(fm);
             });
             TooltipCompat.setTooltipText(searchBack, getString(R.string.back));
         }
@@ -833,10 +838,18 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
                 searchEditText.setText(lastSearchedString);
                 return true;
             }
-            NavigationHelper.gotoMainFragment(activity != null ? activity.getSupportFragmentManager() : getFM());
-            return true;
         }
-        NavigationHelper.gotoMainFragment(activity != null ? activity.getSupportFragmentManager() : getFM());
+        hideKeyboardSearch();
+        hideSuggestionsPanel();
+        final FragmentManager fm = activity != null ? activity.getSupportFragmentManager() : getFM();
+        if (fm != null && fm.getBackStackEntryCount() > 1) {
+            try {
+                fm.popBackStack();
+                return true;
+            } catch (final Exception ignored) {
+            }
+        }
+        NavigationHelper.gotoMainFragment(fm);
         return true;
     }
 

@@ -35,7 +35,7 @@ import okhttp3.brotli.Brotli;
 
 public final class DownloaderImpl extends Downloader {
     public static final String USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0";
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0";
     public static final String YOUTUBE_RESTRICTED_MODE_COOKIE_KEY =
             "youtube_restricted_mode_key";
     public static final String YOUTUBE_RESTRICTED_MODE_COOKIE = "PREF=f2=8000000";
@@ -99,9 +99,11 @@ public final class DownloaderImpl extends Downloader {
     public String getCookies(final String url) {
         final String youtubeCookie = url.contains(YOUTUBE_DOMAIN)
                 ? getCookie(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY) : null;
+        final String defaultConsent = url.contains(YOUTUBE_DOMAIN)
+                ? "SOCS=CAESEwgDEgk2ODE4NDk2NDcaAmVuIAEaBgiA_LyaBg; PREF=f2=8000000&tz=UTC" : null;
 
-        // Recaptcha cookie is always added TODO: not sure if this is necessary
-        return Stream.of(youtubeCookie, getCookie(ReCaptchaActivity.RECAPTCHA_COOKIES_KEY))
+        // Recaptcha and default consent cookies are added
+        return Stream.of(youtubeCookie, getCookie(ReCaptchaActivity.RECAPTCHA_COOKIES_KEY), defaultConsent)
                 .filter(Objects::nonNull)
                 .flatMap(cookies -> Arrays.stream(cookies.split("; *")))
                 .distinct()

@@ -78,7 +78,8 @@ class ErrorInfo private constructor(
         getMessage(throwable, userAction, serviceId),
         isReportable(throwable),
         isRetryable(throwable),
-        (throwable as? ReCaptchaException)?.url,
+        (throwable as? ReCaptchaException)?.url
+            ?: if (throwable is SignInConfirmNotBotException) ReCaptchaActivity.YT_URL else null,
         openInBrowserUrl
     )
 
@@ -97,7 +98,8 @@ class ErrorInfo private constructor(
         getMessage(throwables.firstOrNull(), userAction, serviceId),
         throwables.any(::isReportable),
         throwables.isEmpty() || throwables.any(::isRetryable),
-        throwables.firstNotNullOfOrNull { it as? ReCaptchaException }?.url,
+        throwables.firstNotNullOfOrNull { (it as? ReCaptchaException)?.url }
+            ?: if (throwables.any { it is SignInConfirmNotBotException }) ReCaptchaActivity.YT_URL else null,
         openInBrowserUrl
     )
 

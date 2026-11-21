@@ -42,6 +42,7 @@ jobs:
           exit 1
         fi
         echo "Found APK: $APK_PATH"
+        cp "$APK_PATH" release-output/AdFreeYT_v4.12.apk
         cp "$APK_PATH" release-output/AdFreeYT_v4.11.apk
         cp "$APK_PATH" release-output/AdFreeYT_v4.10.apk
         cp "$APK_PATH" release-output/AdFreeYT_v4.9.apk
@@ -76,12 +77,13 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/newpipe' || github.event_name == 'workflow_dispatch'
       uses: softprops/action-gh-release@v2
       with:
-        name: "AdFreeYT v4.11"
-        tag_name: "v4.11"
+        name: "AdFreeYT v4.12"
+        tag_name: "v4.12"
         draft: false
         prerelease: false
         generate_release_notes: true
         files: |
+          release-output/AdFreeYT_v4.12.apk
           release-output/AdFreeYT_v4.11.apk
           release-output/AdFreeYT_v4.10.apk
           release-output/AdFreeYT_v4.9.apk

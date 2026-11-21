@@ -351,8 +351,13 @@ public final class NavigationHelper {
     }
 
     public static void gotoMainFragment(final FragmentManager fragmentManager) {
-        final boolean popped = fragmentManager.popBackStackImmediate(MAIN_FRAGMENT_TAG, 0);
-        if (!popped) {
+        try {
+            final boolean popped = fragmentManager.popBackStackImmediate(MAIN_FRAGMENT_TAG, 0);
+            if (!popped) {
+                openMainFragment(fragmentManager);
+            }
+        } catch (final Exception e) {
+            Log.w("NavigationHelper", "Failed to pop to main fragment, opening new instance", e);
             openMainFragment(fragmentManager);
         }
     }
@@ -360,11 +365,14 @@ public final class NavigationHelper {
     public static void openMainFragment(final FragmentManager fragmentManager) {
         InfoCache.getInstance().trimCache();
 
-        fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        try {
+            fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        } catch (final Exception ignored) {
+        }
         defaultTransaction(fragmentManager)
                 .replace(R.id.fragment_holder, new MainFragment())
                 .addToBackStack(MAIN_FRAGMENT_TAG)
-                .commit();
+                .commitAllowingStateLoss();
     }
 
     public static boolean tryGotoSearchFragment(final FragmentManager fragmentManager) {
