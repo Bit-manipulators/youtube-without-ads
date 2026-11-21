@@ -240,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
             return windowInsets;
         });
 
-        if (!DeviceUtils.isTv(this)) {
+        if (!DeviceUtils.isTv(this) && savedInstanceState == null) {
             setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
         }
 
@@ -315,19 +315,14 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
                             if (newState == BottomSheetBehavior.STATE_EXPANDED) {
-                                if (mainBinding != null && mainBinding.bottomDockContainer != null) {
-                                    mainBinding.bottomDockContainer.setVisibility(View.GONE);
-                                }
+                                hideBottomDock();
                                 if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
                                     toolbarLayoutBinding.getRoot().setVisibility(View.GONE);
                                 }
                                 setBarsVisible(false);
                             } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
                                     || newState == BottomSheetBehavior.STATE_HIDDEN) {
-                                if (mainBinding != null && mainBinding.bottomDockContainer != null) {
-                                    mainBinding.bottomDockContainer.setVisibility(View.VISIBLE);
-                                    mainBinding.bottomDockContainer.setTranslationY(0f);
-                                }
+                                showBottomDock();
                                 if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
                                     toolbarLayoutBinding.getRoot().setVisibility(View.VISIBLE);
                                     toolbarLayoutBinding.getRoot().setTranslationY(0f);
@@ -1014,30 +1009,67 @@ public class MainActivity extends AppCompatActivity {
         // Animate Bottom Dock
         if (mainBinding.bottomDockContainer != null) {
             mainBinding.bottomDockContainer.animate().cancel();
-            final int bottomMargin = mainBinding.bottomDockContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
-                    ? ((ViewGroup.MarginLayoutParams) mainBinding.bottomDockContainer.getLayoutParams()).bottomMargin : 0;
-            final int bottomHeight = (mainBinding.bottomDockContainer.getHeight() > 0
-                    ? mainBinding.bottomDockContainer.getHeight()
-                    : (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
-                            getResources().getDisplayMetrics())) + bottomMargin;
-            if (visible) {
-                mainBinding.bottomDockContainer.animate()
-                        .translationY(0f)
-                        .setDuration(250)
-                        .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
-                        .start();
+            if (!bottomSheetHiddenOrCollapsed()) {
+                mainBinding.bottomDockContainer.setVisibility(View.GONE);
             } else {
-                mainBinding.bottomDockContainer.animate()
-                        .translationY(bottomHeight + 30)
-                        .setDuration(250)
-                        .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
-                        .start();
+                final int bottomMargin = mainBinding.bottomDockContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
+                        ? ((ViewGroup.MarginLayoutParams) mainBinding.bottomDockContainer.getLayoutParams()).bottomMargin : 0;
+                final int bottomHeight = (mainBinding.bottomDockContainer.getHeight() > 0
+                        ? mainBinding.bottomDockContainer.getHeight()
+                        : (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 56,
+                                getResources().getDisplayMetrics())) + bottomMargin;
+                if (visible) {
+                    mainBinding.bottomDockContainer.setVisibility(View.VISIBLE);
+                    mainBinding.bottomDockContainer.animate()
+                            .translationY(0f)
+                            .setDuration(250)
+                            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f))
+                            .start();
+                } else {
+                    mainBinding.bottomDockContainer.animate()
+                            .translationY(bottomHeight + 30)
+                            .setDuration(250)
+                            .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+                            .start();
+                }
             }
         }
 
         final Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
         if (currentFragment instanceof SearchFragment) {
             ((SearchFragment) currentFragment).onBarsVisibilityChanged(visible);
+        }
+    }
+
+    public void hideBottomDock() {
+        if (mainBinding != null && mainBinding.bottomDockContainer != null) {
+            mainBinding.bottomDockContainer.animate().cancel();
+            mainBinding.bottomDockContainer.setVisibility(View.GONE);
+        }
+    }
+
+    public void showBottomDock() {
+        if (mainBinding != null && mainBinding.bottomDockContainer != null) {
+            if (!bottomSheetHiddenOrCollapsed()) {
+                mainBinding.bottomDockContainer.setVisibility(View.GONE);
+                return;
+            }
+            mainBinding.bottomDockContainer.setVisibility(View.VISIBLE);
+            mainBinding.bottomDockContainer.setTranslationY(0f);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull final android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        final Fragment fragmentPlayer = getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player_holder);
+        boolean isFullscreen = false;
+        if (fragmentPlayer instanceof VideoDetailFragment) {
+            isFullscreen = ((VideoDetailFragment) fragmentPlayer).isFullscreen();
+        }
+        if (!DeviceUtils.isTv(this) && !isFullscreen) {
+            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
         }
     }
 
@@ -1455,9 +1487,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onExpandingMainPlayer() {
-        if (mainBinding != null && mainBinding.bottomDockContainer != null) {
-            mainBinding.bottomDockContainer.setVisibility(View.GONE);
-        }
+        hideBottomDock();
         if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
             toolbarLayoutBinding.getRoot().setVisibility(View.GONE);
         }
@@ -1488,10 +1518,7 @@ public class MainActivity extends AppCompatActivity {
         if (mainBinding != null) {
             mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
             mainBinding.floatingPlayerContainer.removeAllViews();
-            if (mainBinding.bottomDockContainer != null) {
-                mainBinding.bottomDockContainer.setVisibility(View.VISIBLE);
-                mainBinding.bottomDockContainer.setTranslationY(0f);
-            }
+            showBottomDock();
         }
         if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
             toolbarLayoutBinding.getRoot().setVisibility(View.VISIBLE);

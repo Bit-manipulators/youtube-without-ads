@@ -1,5 +1,7 @@
 package org.schabi.newpipe.player.gesture
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.util.Log
 import android.view.MotionEvent
@@ -32,6 +34,21 @@ class MainPlayerGestureListener(
 ) : BasePlayerGestureListener(playerUi), OnTouchListener {
     private var isMoving = false
 
+    private fun getActivity(): Activity? {
+        val parent = playerUi.parentActivity
+        if (parent != null && parent.isPresent) {
+            return parent.get()
+        }
+        var ctx = binding.root.context
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) {
+                return ctx
+            }
+            ctx = ctx.baseContext
+        }
+        return null
+    }
+
     override fun onTouch(v: View, event: MotionEvent): Boolean {
         super.onTouch(v, event)
         if (event.action == MotionEvent.ACTION_UP && isMoving) {
@@ -39,12 +56,17 @@ class MainPlayerGestureListener(
             onScrollEnd(event)
         }
         return when (event.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                v.parent?.requestDisallowInterceptTouchEvent(playerUi.isFullscreen || isMoving)
+            MotionEvent.ACTION_DOWN -> {
+                v.parent?.requestDisallowInterceptTouchEvent(true)
                 true
             }
 
-            MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_MOVE -> {
+                v.parent?.requestDisallowInterceptTouchEvent(true)
+                true
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 v.parent?.requestDisallowInterceptTouchEvent(false)
                 false
             }
@@ -174,8 +196,8 @@ class MainPlayerGestureListener(
         if (e1 != null) {
             val diffY = e2.y - e1.y
             val diffX = e2.x - e1.x
-            if (abs(diffY) > abs(diffX) && abs(diffY) > 60 && abs(velocityY) > 100) {
-                val act = player.context as? AppCompatActivity
+            if (abs(diffY) > abs(diffX) && abs(diffY) > 50 && abs(velocityY) > 80) {
+                val act = getActivity()
                 if (diffY < 0 && !playerUi.isFullscreen) {
                     // Swiping up when not in fullscreen -> make full screen in landscape mode
                     act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -206,8 +228,8 @@ class MainPlayerGestureListener(
         if (!playerUi.isFullscreen) {
             val diffY = initialEvent.y - movingEvent.y
             val diffX = movingEvent.x - initialEvent.x
-            if (diffY > 50 && abs(diffY) > abs(diffX)) {
-                val act = player.context as? AppCompatActivity
+            if (diffY > 40 && abs(diffY) > abs(diffX)) {
+                val act = getActivity()
                 act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 playerUi.toggleFullscreen()
                 return true
@@ -248,9 +270,9 @@ class MainPlayerGestureListener(
             }
             DisplayPortion.MIDDLE -> {
                 val diffY = movingEvent.y - initialEvent.y
-                if (diffY > 50) {
+                if (diffY > 40) {
                     playerUi.toggleFullscreen()
-                    val act = player.context as? AppCompatActivity
+                    val act = getActivity()
                     act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
                     isMoving = false
                 }

@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
 import android.database.ContentObserver;
 import android.graphics.Color;
@@ -52,6 +53,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.WindowCompat;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -384,7 +386,18 @@ public final class VideoDetailFragment
     public View onCreateView(@NonNull final LayoutInflater inflater, final ViewGroup container,
                              final Bundle savedInstanceState) {
         binding = FragmentVideoDetailBinding.inflate(inflater, container, false);
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).hideBottomDock();
+        }
         return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).hideBottomDock();
+        }
     }
 
     @Override
@@ -409,6 +422,10 @@ public final class VideoDetailFragment
         }
 
         activity.sendBroadcast(new Intent(ACTION_VIDEO_FRAGMENT_RESUMED));
+
+        if (activity instanceof MainActivity && bottomSheetState == BottomSheetBehavior.STATE_EXPANDED) {
+            ((MainActivity) activity).hideBottomDock();
+        }
 
         updateOverlayPlayQueueButtonVisibility();
 
@@ -1149,6 +1166,7 @@ public final class VideoDetailFragment
         }
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).showFloatingPlayer();
+            ((MainActivity) activity).showBottomDock();
         } else if (bottomSheetBehavior != null) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
@@ -2061,6 +2079,21 @@ public final class VideoDetailFragment
         }
     }
 
+    @Override
+    public void onConfigurationChanged(@NonNull final Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (isPlayerAvailable() && !isFullscreen()) {
+                player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
+            }
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            if (isPlayerAvailable() && isFullscreen()) {
+                player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
+            }
+        }
+        updateLayoutInsets();
+    }
+
     /*
      * Will scroll down to description view after long click on moreOptionsButton
      * */
@@ -2104,8 +2137,13 @@ public final class VideoDetailFragment
             ((MainActivity) activity).setGlassStatusBarVisible(true);
             ((MainActivity) activity).applyTransparentSystemBars();
         } else {
+            WindowCompat.setDecorFitsSystemWindows(activity.getWindow(), false);
             activity.getWindow().setStatusBarColor(Color.TRANSPARENT);
             activity.getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                activity.getWindow().setStatusBarContrastEnforced(false);
+                activity.getWindow().setNavigationBarContrastEnforced(false);
+            }
         }
     }
 
@@ -2377,6 +2415,12 @@ public final class VideoDetailFragment
      * Remove unneeded information while waiting for a next task
      * */
     public void cleanUp() {
+        if (activity != null && !DeviceUtils.isTv(activity)) {
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        }
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).showBottomDock();
+        }
         // New beginning
         stack.clear();
         if (currentWorker != null) {
@@ -2465,6 +2509,10 @@ public final class VideoDetailFragment
         bottomSheetBehavior.setState(lastStableBottomSheetState);
         updateBottomSheetState(lastStableBottomSheetState);
 
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).hideBottomDock();
+        }
+
         final int peekHeight = 0;
         if (bottomSheetState != BottomSheetBehavior.STATE_HIDDEN) {
             manageSpaceAtTheBottom(false);
@@ -2500,6 +2548,9 @@ public final class VideoDetailFragment
                         }
                         break;
                     case BottomSheetBehavior.STATE_EXPANDED:
+                        if (activity instanceof MainActivity) {
+                            ((MainActivity) activity).hideBottomDock();
+                        }
                         moveFocusToMainFragment(false);
                         manageSpaceAtTheBottom(false);
 
@@ -2527,6 +2578,9 @@ public final class VideoDetailFragment
                         manageSpaceAtTheBottom(true);
 
                         bottomSheetBehavior.setPeekHeight(0);
+                        if (activity instanceof MainActivity) {
+                            ((MainActivity) activity).showBottomDock();
+                        }
                         minimizeToFloatingPlayer();
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:

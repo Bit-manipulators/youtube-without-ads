@@ -3,15 +3,15 @@
 # 🎬 AdFreeYT
 
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk">
-  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.10 APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk">
+  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.11 APK"/>
 </a>
 
 <br/>
 <br/>
 
 <!-- OFFICIAL STORE / GITHUB BADGES -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk">
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk">
   <img src="assets/badges/download-android-apk.svg" height="60" alt="Download Android APK"/>
 </a>
 &nbsp;&nbsp;
@@ -95,17 +95,16 @@
 
 ---
 
-## 🚀 What's New in v4.10
+## 🚀 What's New in v4.11
 
-- **Search Header & Seamless Scroll**: Fixed empty black space during search scrolling; search bar and "showing results for..." header slide away together with results scrolling cleanly to the top.
-- **Search Back Button & Navigation**: Added fully responsive back arrow and fixed hardware back navigation from search directly to the feed.
-- **Tab Switching & Blank Screen Fix**: Resolved blank screen issue when switching tabs; now recreates adapter cleanly and synchronizes bottom dock with ViewPager without listener conflicts.
-- **Direct Save & History Navigation from Search**: Bottom dock buttons (Saved, History, Feed) now work immediately when pressed from the search page.
-- **Infinite Feed Prefetching (Zero Buffering)**: Pre-loads next feed items 6 items before hitting the bottom, increasing feed batch sizes to 30 items for smooth, endless scrolling without buffering pauses.
-- **In-App Update Prompt & Fast Checks**: Added in-app update dialog so users are immediately notified of new releases even if notification tray permissions are disabled.
-- **Player Dock & Transparent Navigation Bar**: Main bottom dock hides completely when expanding video detail; navigation bar stays 100% transparent with immersive edge-to-edge drawing.
-- **Swipe Gestures to Fullscreen Landscape**: Swiping up enters fullscreen in landscape mode; swiping down exits fullscreen and rotates back to normal portrait mode.
-- **Strict Portrait Lock Outside Fullscreen**: App rotation is strictly locked to portrait across all screens, rotating to landscape ONLY during fullscreen video playback.
+- **Fixed Bottom Dock on Video Page**: Main bottom dock now hides completely and reliably when clicking and playing any video; stays hidden while video details and comments are open.
+- **Fixed Fullscreen 1-Second Glitch**: Preserves activity state across orientation changes (`configChanges`), eliminating the glitch where fullscreen would automatically kick back to portrait after 1 second.
+- **Swipe Gestures to Fullscreen Landscape**: Swiping up on the video player instantly enters fullscreen in landscape mode; swiping down exits fullscreen and rotates the screen back to portrait.
+- **3-Zone Fullscreen Controls**: Fullscreen landscape screen is divided into 3 zones — Left 1/3 for brightness control, Middle 1/3 for swipe-down minimize/exit fullscreen, Right 1/3 for volume control.
+- **Strict Portrait Orientation**: App is strictly locked to portrait across all pages (feeds, search, tabs, settings), rotating into landscape ONLY during fullscreen video playback.
+- **Infinite Feed Scrolling (Zero Buffering)**: Introduces an in-memory prefetch buffer pool and resilient kiosk fallbacks with pre-load triggering 10 items before the bottom, preventing feed buffering stalls permanently.
+- **Updated About Us Version**: Dynamically binds the exact release version (`v4.11`) on the About Us / Settings page.
+- **Transparent Navigation Bar**: Full edge-to-edge transparent system navigation bar across all screens.
 
 ---
 
@@ -113,8 +112,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_v4.10.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_v4.11.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -123,10 +122,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_v4.10.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk
+curl -L -o AdFreeYT_v4.11.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_v4.10.apk
+termux-open AdFreeYT_v4.11.apk
 ```
 
 ---

@@ -23,6 +23,7 @@ import org.schabi.newpipe.extractor.stream.StreamType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,6 +36,9 @@ import io.reactivex.rxjava3.core.Single;
  */
 public final class SuggestionEngine {
     private static final String TAG = "SuggestionEngine";
+
+    private static final List<StreamInfoItem> RECOMMENDATION_BUFFER =
+            Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Curated list of discovery topics for random recommendations on the home page.
@@ -239,7 +243,7 @@ public final class SuggestionEngine {
 
     /**
      * Fetches personalized recommendation videos, balancing user history and discovery topics,
-     * and deduplicating against already seen URLs.
+     * using an in-memory buffer pool and resilient fallbacks so scrolling never stalls.
      *
      * @param serviceId streaming service identifier
      * @param seenUrls set of already seen video URLs (or null)
@@ -250,20 +254,36 @@ public final class SuggestionEngine {
                                                                     final Set<String> seenUrls,
                                                                     final int limit) {
         return Single.fromCallable(() -> {
-            final List<String> topics = new ArrayList<>();
-            topics.add(getNextSuggestionTopic());
-            topics.add(getNextSuggestionTopic());
-            topics.add(getNextSuggestionTopic());
-            return topics;
-        }).flatMap(topics -> {
-            final Single<List<StreamInfoItem>> q1 = fetchVideosForQuery(serviceId, topics.get(0))
+            final List<StreamInfoItem> buffered = new ArrayList<>();
+            synchronized (RECOMMENDATION_BUFFER) {
+                final Iterator<StreamInfoItem> it = RECOMMENDATION_BUFFER.iterator();
+                while (it.hasNext() && buffered.size() < limit) {
+                    final StreamInfoItem item = it.next();
+                    it.remove();
+                    if (item != null && item.getUrl() != null) {
+                        if (seenUrls == null || seenUrls.add(item.getUrl())) {
+                            buffered.add(item);
+                        }
+                    }
+                }
+            }
+            return buffered;
+        }).flatMap(buffered -> {
+            if (buffered.size() >= limit) {
+                return Single.just(buffered);
+            }
+
+            final String topic1 = getNextSuggestionTopic();
+            final String topic2 = getNextSuggestionTopic();
+            final Single<List<StreamInfoItem>> q1 = fetchVideosForQuery(serviceId, topic1)
                     .onErrorReturnItem(Collections.emptyList());
-            final Single<List<StreamInfoItem>> q2 = fetchVideosForQuery(serviceId, topics.get(1))
-                    .onErrorReturnItem(Collections.emptyList());
-            final Single<List<StreamInfoItem>> q3 = fetchVideosForQuery(serviceId, topics.get(2))
+            final Single<List<StreamInfoItem>> q2 = fetchVideosForQuery(serviceId, topic2)
                     .onErrorReturnItem(Collections.emptyList());
 
-            return Single.zip(q1, q2, q3, (list1, list2, list3) -> {
+            return Single.zip(q1, q2, (list1, list2) -> {
+                final List<StreamInfoItem> result = new ArrayList<>(buffered);
+                final List<StreamInfoItem> extra = new ArrayList<>();
+
                 final List<StreamInfoItem> combined = new ArrayList<>();
                 if (list1 != null) {
                     combined.addAll(list1);
@@ -271,21 +291,53 @@ public final class SuggestionEngine {
                 if (list2 != null) {
                     combined.addAll(list2);
                 }
-                if (list3 != null) {
-                    combined.addAll(list3);
-                }
 
-                final List<StreamInfoItem> result = new ArrayList<>();
                 for (final StreamInfoItem item : combined) {
                     if (item != null && item.getUrl() != null) {
                         if (seenUrls == null || seenUrls.add(item.getUrl())) {
-                            result.add(item);
+                            if (result.size() < limit) {
+                                result.add(item);
+                            } else {
+                                extra.add(item);
+                            }
                         }
                     }
-                    if (result.size() >= limit) {
-                        break;
+                }
+
+                if (!extra.isEmpty()) {
+                    synchronized (RECOMMENDATION_BUFFER) {
+                        if (RECOMMENDATION_BUFFER.size() < 100) {
+                            RECOMMENDATION_BUFFER.addAll(extra);
+                        }
                     }
                 }
+
+                // If still fewer than 10 items, fall back to trending kiosk items
+                if (result.size() < 10) {
+                    try {
+                        final org.schabi.newpipe.extractor.kiosk.KioskList kioskList =
+                                org.schabi.newpipe.extractor.NewPipe.getService(serviceId).getKioskList();
+                        final String kioskId = kioskList.getDefaultKioskId();
+                        final String kioskUrl = kioskList.getListLinkHandlerFactoryByType(kioskId)
+                                .fromId(kioskId).getUrl();
+                        final KioskInfo kioskInfo = ExtractorHelper.getKioskInfo(serviceId, kioskUrl, false)
+                                .blockingGet();
+                        if (kioskInfo != null && kioskInfo.getRelatedItems() != null) {
+                            for (final StreamInfoItem item : filterLiveStreams(kioskInfo.getRelatedItems())) {
+                                if (item != null && item.getUrl() != null) {
+                                    if (seenUrls == null || seenUrls.add(item.getUrl())) {
+                                        result.add(item);
+                                    }
+                                }
+                                if (result.size() >= limit) {
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (final Exception ignored) {
+                    }
+                }
+
                 return result;
             });
         }).onErrorReturn(throwable -> {
@@ -342,6 +394,12 @@ public final class SuggestionEngine {
                                 for (final StreamInfoItem item : cleanTrending) {
                                     if (item.getUrl() != null && seenUrls.add(item.getUrl())) {
                                         finalFeed.add(item);
+                                    } else if (item.getUrl() != null) {
+                                        synchronized (RECOMMENDATION_BUFFER) {
+                                            if (RECOMMENDATION_BUFFER.size() < 60) {
+                                                RECOMMENDATION_BUFFER.add(item);
+                                            }
+                                        }
                                     }
                                 }
 

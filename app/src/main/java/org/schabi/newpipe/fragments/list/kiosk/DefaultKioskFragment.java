@@ -78,13 +78,38 @@ public class DefaultKioskFragment extends KioskFragment {
 
     private Single<ListExtractor.InfoItemsPage<StreamInfoItem>> fetchMoreHomeFeedItems() {
         final int nextPageNum = pageCounter++;
-        return SuggestionEngine.fetchRecommendations(serviceId, seenUrls, 30)
+        return SuggestionEngine.fetchRecommendations(serviceId, seenUrls, 25)
                 .onErrorReturnItem(Collections.emptyList())
-                .map(items -> new ListExtractor.InfoItemsPage<>(
-                        items != null ? items : Collections.emptyList(),
-                        new Page("home_feed_page_" + nextPageNum),
-                        Collections.emptyList()
-                ));
+                .flatMap(items -> {
+                    if (items != null && !items.isEmpty()) {
+                        return Single.just(new ListExtractor.InfoItemsPage<>(
+                                items,
+                                new Page("home_feed_page_" + nextPageNum),
+                                Collections.emptyList()
+                        ));
+                    }
+                    return ExtractorHelper.getKioskInfo(serviceId, url, false)
+                            .map(kioskInfo -> {
+                                final List<StreamInfoItem> fallbackItems = new ArrayList<>();
+                                if (kioskInfo.getRelatedItems() != null) {
+                                    for (final StreamInfoItem it : SuggestionEngine.filterLiveStreams(kioskInfo.getRelatedItems())) {
+                                        if (it != null && it.getUrl() != null && seenUrls.add(it.getUrl())) {
+                                            fallbackItems.add(it);
+                                        }
+                                    }
+                                }
+                                return new ListExtractor.InfoItemsPage<>(
+                                        fallbackItems,
+                                        new Page("home_feed_page_" + nextPageNum),
+                                        Collections.emptyList()
+                                );
+                            })
+                            .onErrorReturnItem(new ListExtractor.InfoItemsPage<>(
+                                    Collections.emptyList(),
+                                    new Page("home_feed_page_" + nextPageNum),
+                                    Collections.emptyList()
+                            ));
+                });
     }
 
     @Override

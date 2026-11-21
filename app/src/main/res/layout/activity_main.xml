@@ -61,6 +61,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_horizontal"
+            android:elevation="20dp"
             app:behavior_hideable="true"
             app:behavior_peekHeight="0dp"
             app:layout_behavior="org.schabi.newpipe.player.gesture.CustomBottomSheetBehavior" />
@@ -75,7 +76,7 @@
             android:layout_marginBottom="88dp"
             android:visibility="gone"
             app:cardCornerRadius="14dp"
-            app:cardElevation="16dp"
+            app:cardElevation="24dp"
             app:cardBackgroundColor="@android:color/black">
 
             <FrameLayout

@@ -444,6 +444,11 @@ public final class NavigationHelper {
             detailFragment.scrollToTop();
         };
 
+        if (context instanceof org.schabi.newpipe.MainActivity) {
+            ((org.schabi.newpipe.MainActivity) context).hideBottomDock();
+            ((org.schabi.newpipe.MainActivity) context).onExpandingMainPlayer();
+        }
+
         final Fragment fragment = fragmentManager.findFragmentById(R.id.fragment_player_holder);
         if (fragment instanceof VideoDetailFragment && fragment.isAdded()) {
             onVideoDetailFragmentReady.run((VideoDetailFragment) fragment);

@@ -17,7 +17,7 @@
         <Preference
             android:key="about_version"
             android:title="@string/version"
-            android:summary="4.8.0"
+            android:summary="4.11.0"
             android:icon="@drawable/ic_info_outline"
             app:iconSpaceReserved="false" />
 
