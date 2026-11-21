@@ -7,9 +7,9 @@ rootProject.name = "NewPipe"
 
 pluginManagement {
     repositories {
-        gradlePluginPortal()
-        google()
         mavenCentral()
+        google()
+        gradlePluginPortal()
     }
 }
 
