@@ -2,16 +2,22 @@
 
 # 🎬 AdFreeYT
 
+[![Build Status](https://github.com/Bit-manipulators/youtube-without-ads/actions/workflows/build-apk.yml/badge.svg)](https://github.com/Bit-manipulators/youtube-without-ads/actions)
+[![Latest Release](https://img.shields.io/github/v/release/Bit-manipulators/youtube-without-ads?color=red&logo=github&label=Latest%20Release)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest)
+[![Total Downloads](https://img.shields.io/github/downloads/Bit-manipulators/youtube-without-ads/total?color=blue&logo=android&label=Downloads)](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest)
+
+<br/>
+
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk">
-  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.11 APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk">
+  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download Latest AdFreeYT APK"/>
 </a>
 
 <br/>
 <br/>
 
 <!-- OFFICIAL STORE / GITHUB BADGES -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk">
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk">
   <img src="assets/badges/download-android-apk.svg" height="60" alt="Download Android APK"/>
 </a>
 &nbsp;&nbsp;
@@ -112,8 +118,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_v4.11.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_latest.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -122,10 +128,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_v4.11.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.11.apk
+curl -L -o AdFreeYT_latest.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_v4.11.apk
+termux-open AdFreeYT_latest.apk
 ```
 
 ---
