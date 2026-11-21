@@ -325,6 +325,10 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         }
     }
 
+    public int getSelectedTab() {
+        return binding != null && binding.pager != null ? binding.pager.getCurrentItem() : 0;
+    }
+
     public void commitPlaylistTabs() {
         pagerAdapter.getLocalPlaylistFragments()
                 .stream()
