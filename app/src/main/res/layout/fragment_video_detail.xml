@@ -583,7 +583,7 @@
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="72dp"
+            android:paddingBottom="60dp"
             android:clipToPadding="false"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
@@ -597,8 +597,7 @@
             android:background="?attr/glass_dock_drawable"
             android:elevation="12dp"
             android:padding="3dp"
-            android:visibility="visible"
-            app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior">
+            android:visibility="visible">
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_layout"

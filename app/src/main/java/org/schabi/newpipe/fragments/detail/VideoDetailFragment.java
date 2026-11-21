@@ -213,7 +213,7 @@ public final class VideoDetailFragment
                 binding.detailRootLinearLayout.setPadding(0, 0, 0, 0);
             } else {
                 final int topInset = getStatusBarTopInset();
-                binding.detailRootLinearLayout.setPadding(0, topInset, 0, navBarBottomInset);
+                binding.detailRootLinearLayout.setPadding(0, topInset, 0, 0);
             }
         } catch (final Exception e) {
             Log.e(TAG, "Error updating layout insets", e);
@@ -2560,21 +2560,13 @@ public final class VideoDetailFragment
      * @param showMore whether main fragment should be expanded or not
      */
     private void manageSpaceAtTheBottom(final boolean showMore) {
-        final int peekHeight = getResources().getDimensionPixelSize(R.dimen.mini_player_height);
         final ViewGroup holder = requireActivity().findViewById(R.id.fragment_holder);
-        final int newBottomPadding;
-        if (showMore) {
-            newBottomPadding = 0;
-        } else {
-            newBottomPadding = peekHeight;
+        if (holder != null && holder.getPaddingBottom() != 0) {
+            holder.setPadding(holder.getPaddingLeft(),
+                    holder.getPaddingTop(),
+                    holder.getPaddingRight(),
+                    0);
         }
-        if (holder.getPaddingBottom() == newBottomPadding) {
-            return;
-        }
-        holder.setPadding(holder.getPaddingLeft(),
-                holder.getPaddingTop(),
-                holder.getPaddingRight(),
-                newBottomPadding);
     }
 
     private void setupBottomPlayer() {

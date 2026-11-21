@@ -14,12 +14,14 @@ import androidx.core.view.isVisible
 import kotlin.math.abs
 import org.schabi.newpipe.MainActivity
 import org.schabi.newpipe.R
+import org.schabi.newpipe.fragments.detail.VideoDetailFragment
 import org.schabi.newpipe.ktx.AnimationType
 import org.schabi.newpipe.ktx.animate
 import org.schabi.newpipe.player.Player
 import org.schabi.newpipe.player.helper.AudioReactor
 import org.schabi.newpipe.player.helper.PlayerHelper
 import org.schabi.newpipe.player.ui.MainPlayerUi
+import org.schabi.newpipe.util.DeviceUtils
 import org.schabi.newpipe.util.ThemeHelper.getAndroidDimenPx
 
 /**
@@ -33,6 +35,29 @@ class MainPlayerGestureListener(
     private val playerUi: MainPlayerUi
 ) : BasePlayerGestureListener(playerUi), OnTouchListener {
     private var isMoving = false
+
+    private fun isLandscapeFullscreen(): Boolean {
+        val act = getActivity()
+        val isLandscape = if (act != null) {
+            DeviceUtils.isLandscape(act)
+        } else {
+            playerUi.isLandscape
+        }
+        return isLandscape || playerUi.isFullscreen
+    }
+
+    private fun minimizeToFloatingPlayer() {
+        val act = getActivity()
+        if (act is MainActivity) {
+            val fragmentPlayer = act.supportFragmentManager.findFragmentById(R.id.fragment_player_holder)
+            if (fragmentPlayer is VideoDetailFragment) {
+                fragmentPlayer.minimizeToFloatingPlayer()
+            } else {
+                act.showFloatingPlayer()
+                act.showBottomDock()
+            }
+        }
+    }
 
     private fun getActivity(): Activity? {
         val parent = playerUi.parentActivity
@@ -198,16 +223,29 @@ class MainPlayerGestureListener(
             val diffX = e2.x - e1.x
             if (abs(diffY) > abs(diffX) && abs(diffY) > 50 && abs(velocityY) > 80) {
                 val act = getActivity()
-                if (diffY < 0 && !playerUi.isFullscreen) {
-                    // Swiping up when not in fullscreen -> make full screen in landscape mode
-                    act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                    playerUi.toggleFullscreen()
-                    return true
-                } else if (diffY > 0 && playerUi.isFullscreen) {
-                    // Swiping down when in fullscreen -> rotate video to normal portrait / exit fullscreen
-                    playerUi.toggleFullscreen()
-                    act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
-                    return true
+                if (!isLandscapeFullscreen()) {
+                    if (diffY < 0) {
+                        // Swiping UP anywhere on video in portrait -> make full screen in landscape mode
+                        act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                        if (!playerUi.isFullscreen) {
+                            playerUi.toggleFullscreen()
+                        }
+                        return true
+                    } else if (diffY > 0) {
+                        // Swiping DOWN anywhere on video in portrait -> minimize to in-app mini floating window
+                        minimizeToFloatingPlayer()
+                        return true
+                    }
+                } else {
+                    // Landscape full screen mode: only middle section swiping down minimizes
+                    val portion = getDisplayPortion(e1)
+                    if (portion == DisplayPortion.MIDDLE && diffY > 0) {
+                        if (playerUi.isFullscreen) {
+                            playerUi.toggleFullscreen()
+                        }
+                        act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+                        return true
+                    }
                 }
             }
         }
@@ -224,21 +262,32 @@ class MainPlayerGestureListener(
             return false
         }
 
-        // When NOT in fullscreen: swipe up to enter fullscreen in landscape
-        if (!playerUi.isFullscreen) {
+        // When NOT in landscape full screen (portrait on page just after clicking video):
+        // Stop brightness and volume shortcuts!
+        if (!isLandscapeFullscreen()) {
             val diffY = initialEvent.y - movingEvent.y
             val diffX = movingEvent.x - initialEvent.x
-            if (diffY > 40 && abs(diffY) > abs(diffX)) {
-                val act = getActivity()
-                act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                playerUi.toggleFullscreen()
-                isMoving = false
-                return true
+            if (abs(diffY) > MOVEMENT_THRESHOLD && abs(diffY) > abs(diffX)) {
+                if (diffY > 0) {
+                    // Swiping UP anywhere on video -> enter full screen in landscape mode
+                    val act = getActivity()
+                    act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    if (!playerUi.isFullscreen) {
+                        playerUi.toggleFullscreen()
+                    }
+                    isMoving = false
+                    return true
+                } else {
+                    // Swiping DOWN anywhere on video -> minimize to in-app mini floating window
+                    minimizeToFloatingPlayer()
+                    isMoving = false
+                    return true
+                }
             }
             return false
         }
 
-        // In fullscreen:
+        // In landscape fullscreen mode:
         // Calculate heights of status and navigation bars
         val statusBarHeight = getAndroidDimenPx(player.context, "status_bar_height")
         val navigationBarHeight = getAndroidDimenPx(player.context, "navigation_bar_height")
@@ -260,10 +309,10 @@ class MainPlayerGestureListener(
 
         isMoving = true
 
-        // Full screen: divide screen into 3 parts:
-        // 1st part (Left 1/3): brightness
-        // 2nd part (Middle 1/3): minimizing (swiping down minimizes/rotates back to normal)
-        // 3rd part (Right 1/3): volume
+        // Landscape full screen: divide whole screen from left to right into 3 shortcuts:
+        // 1st one (Left 1/3): brightness
+        // 2nd one (Middle 1/3): minimizing (swiping down exits fullscreen to normal portrait)
+        // 3rd one (Right 1/3): volume control
         val portion = getDisplayPortion(initialEvent)
         when (portion) {
             DisplayPortion.LEFT -> {
@@ -271,8 +320,10 @@ class MainPlayerGestureListener(
             }
             DisplayPortion.MIDDLE -> {
                 val diffY = movingEvent.y - initialEvent.y
-                if (diffY > 40) {
-                    playerUi.toggleFullscreen()
+                if (diffY > MOVEMENT_THRESHOLD) {
+                    if (playerUi.isFullscreen) {
+                        playerUi.toggleFullscreen()
+                    }
                     val act = getActivity()
                     act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
                     isMoving = false
