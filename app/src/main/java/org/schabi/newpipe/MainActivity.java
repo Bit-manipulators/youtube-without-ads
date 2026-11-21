@@ -89,6 +89,7 @@ import org.schabi.newpipe.fragments.detail.VideoDetailFragment;
 import org.schabi.newpipe.fragments.list.comments.CommentRepliesFragment;
 import org.schabi.newpipe.fragments.list.search.SearchFragment;
 import org.schabi.newpipe.local.feed.notifications.NotificationWorker;
+import org.schabi.newpipe.local.bookmark.BookmarkFragment;
 import org.schabi.newpipe.local.history.StatisticsPlaylistFragment;
 import org.schabi.newpipe.player.Player;
 import org.schabi.newpipe.player.event.OnKeyDownListener;
@@ -246,15 +247,49 @@ public class MainActivity extends AppCompatActivity {
 
         if (mainBinding.mainTabLayout != null) {
             mainBinding.mainTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(final TabLayout.Tab tab) {
+                private void handleTabSelection(final TabLayout.Tab tab) {
                     final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
                     if (currentFrag instanceof MainFragment) {
                         ((MainFragment) currentFrag).setSelectedTab(tab.getPosition());
+                    } else if (currentFrag instanceof SearchFragment) {
+                        if (tab.getPosition() == 0) {
+                            return;
+                        } else if (tab.getPosition() == 1) {
+                            NavigationHelper.openBookmarksFragment(getSupportFragmentManager());
+                        } else if (tab.getPosition() == 2) {
+                            NavigationHelper.openStatisticFragment(getSupportFragmentManager());
+                        }
+                    } else if (currentFrag instanceof BookmarkFragment || currentFrag instanceof StatisticsPlaylistFragment) {
+                        if (tab.getPosition() == 0) {
+                            if (NavigationHelper.tryGotoSearchFragment(getSupportFragmentManager())) {
+                                return;
+                            }
+                            NavigationHelper.gotoMainFragment(getSupportFragmentManager());
+                        } else if (tab.getPosition() == 1) {
+                            if (!(currentFrag instanceof BookmarkFragment)) {
+                                getSupportFragmentManager().popBackStack();
+                                NavigationHelper.openBookmarksFragment(getSupportFragmentManager());
+                            }
+                        } else if (tab.getPosition() == 2) {
+                            if (!(currentFrag instanceof StatisticsPlaylistFragment)) {
+                                getSupportFragmentManager().popBackStack();
+                                NavigationHelper.openStatisticFragment(getSupportFragmentManager());
+                            }
+                        }
                     } else {
+                        if (tab.getPosition() == 0) {
+                            if (NavigationHelper.tryGotoSearchFragment(getSupportFragmentManager())) {
+                                return;
+                            }
+                        }
                         MainFragment.setPendingTab(tab.getPosition());
                         NavigationHelper.gotoMainFragment(getSupportFragmentManager());
                     }
+                }
+
+                @Override
+                public void onTabSelected(final TabLayout.Tab tab) {
+                    handleTabSelection(tab);
                 }
 
                 @Override
@@ -262,13 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onTabReselected(final TabLayout.Tab tab) {
-                    final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
-                    if (currentFrag instanceof MainFragment) {
-                        ((MainFragment) currentFrag).setSelectedTab(tab.getPosition());
-                    } else {
-                        MainFragment.setPendingTab(tab.getPosition());
-                        NavigationHelper.gotoMainFragment(getSupportFragmentManager());
-                    }
+                    handleTabSelection(tab);
                 }
             });
         }
@@ -897,7 +926,9 @@ public class MainActivity extends AppCompatActivity {
             // to show the top level comments again.
             openDetailFragmentFromCommentReplies(fm, true);
         } else if (fragment instanceof SearchFragment) {
-            NavigationHelper.gotoMainFragment(fm);
+            if (!((SearchFragment) fragment).onBackPressed()) {
+                NavigationHelper.gotoMainFragment(fm);
+            }
         } else if (!NavigationHelper.tryGotoSearchFragment(fm)) {
             // If search fragment wasn't found in the backstack go to the main fragment
             NavigationHelper.gotoMainFragment(fm);
@@ -1132,8 +1163,8 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setTitle(null);
             toolbarLayoutBinding.toolbar.setTitle(null);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            toolbarLayoutBinding.toolbar.setNavigationIcon(null);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            toolbarLayoutBinding.toolbar.setNavigationOnClickListener(v -> onHomeButtonPressed());
             mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             updateToolbarBranding(false);
 
@@ -1178,6 +1209,25 @@ public class MainActivity extends AppCompatActivity {
                 if (lp.topMargin != actionBarHeight) {
                     lp.topMargin = actionBarHeight;
                     holder.setLayoutParams(lp);
+                }
+            }
+        }
+        if (mainBinding != null && mainBinding.mainTabLayout != null) {
+            int targetTab = -1;
+            if (fragment instanceof MainFragment) {
+                targetTab = ((MainFragment) fragment).getSelectedTab();
+            } else if (fragment instanceof SearchFragment) {
+                targetTab = 0;
+            } else if (fragment instanceof BookmarkFragment) {
+                targetTab = 1;
+            } else if (fragment instanceof StatisticsPlaylistFragment) {
+                targetTab = 2;
+            }
+            if (targetTab >= 0 && targetTab < mainBinding.mainTabLayout.getTabCount()) {
+                final com.google.android.material.tabs.TabLayout.Tab tab =
+                        mainBinding.mainTabLayout.getTabAt(targetTab);
+                if (tab != null && !tab.isSelected()) {
+                    tab.select();
                 }
             }
         }

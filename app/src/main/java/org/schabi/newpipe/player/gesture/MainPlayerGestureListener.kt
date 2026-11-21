@@ -232,6 +232,7 @@ class MainPlayerGestureListener(
                 val act = getActivity()
                 act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 playerUi.toggleFullscreen()
+                isMoving = false
                 return true
             }
             return false

@@ -18,6 +18,7 @@
 package org.schabi.newpipe.views;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
@@ -98,7 +99,9 @@ public final class FocusAwareCoordinator extends CoordinatorLayout {
         final var insets = windowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars());
         final ViewGroup controls = findViewById(R.id.playbackControlRoot);
         if (controls != null) {
-            controls.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            final boolean isLandscape = getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_LANDSCAPE;
+            controls.setPadding(insets.left, isLandscape ? insets.top : 0, insets.right, isLandscape ? insets.bottom : 0);
         }
         return super.onApplyWindowInsets(windowInsets);
     }
