@@ -9,15 +9,15 @@
 <br/>
 
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk">
-  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download Latest AdFreeYT APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.15.apk">
+  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.15 APK"/>
 </a>
 
 <br/>
 <br/>
 
 <!-- OFFICIAL STORE / GITHUB BADGES -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk">
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.15.apk">
   <img src="assets/badges/download-android-apk.svg" height="60" alt="Download Android APK"/>
 </a>
 &nbsp;&nbsp;
@@ -101,16 +101,13 @@
 
 ---
 
-## 🚀 What's New in v4.14
+## 🚀 What's New in v4.15
 
+- **Mention Versioned APK in README & CI Automation**: README download links and Termux curl commands explicitly mention the versioned APK (`AdFreeYT_v4.15.apk`), automated on each release via GitHub Actions CI.
+- **Fixed Detail Dock Blank Panel Glitch**: Detail dock now correctly remains hidden while scrolling related videos, description, or comments; eliminates the empty dark pill panel glitch by keeping tab visibility and icons synchronized.
 - **Fixed Bottom Dock on Video Page**: Main bottom dock now hides completely and reliably when clicking and playing any video; stays hidden while video details and comments are open.
-- **Fixed Fullscreen 1-Second Glitch**: Preserves activity state across orientation changes (`configChanges`), eliminating the glitch where fullscreen would automatically kick back to portrait after 1 second.
-- **Swipe Gestures to Fullscreen Landscape**: Swiping up on the video player instantly enters fullscreen in landscape mode; swiping down exits fullscreen and rotates the screen back to portrait.
-- **3-Zone Fullscreen Controls**: Fullscreen landscape screen is divided into 3 zones — Left 1/3 for brightness control, Middle 1/3 for swipe-down minimize/exit fullscreen, Right 1/3 for volume control.
-- **Strict Portrait Orientation**: App is strictly locked to portrait across all pages (feeds, search, tabs, settings), rotating into landscape ONLY during fullscreen video playback.
-- **Infinite Feed Scrolling (Zero Buffering)**: Introduces an in-memory prefetch buffer pool and resilient kiosk fallbacks with pre-load triggering 10 items before the bottom, preventing feed buffering stalls permanently.
-- **Updated About Us Version**: Dynamically binds the exact release version (`v4.11`) on the About Us / Settings page.
-- **Transparent Navigation Bar**: Full edge-to-edge transparent system navigation bar across all screens.
+- **Swipe Gestures to Fullscreen Landscape & Mini Floating Window**: Swiping up on the video player enters fullscreen in landscape mode; swiping down minimizes to the in-app floating window.
+- **3-Zone Fullscreen Controls**: Fullscreen landscape screen divided into 3 zones — Left 1/3 for brightness, Middle 1/3 for swipe-down minimize/exit fullscreen, Right 1/3 for volume.
 
 ---
 
@@ -118,8 +115,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_latest.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.15.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_v4.15.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -128,10 +125,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_latest.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_latest.apk
+curl -L -o AdFreeYT_v4.15.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.15.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_latest.apk
+termux-open AdFreeYT_v4.15.apk
 ```
 
 ---

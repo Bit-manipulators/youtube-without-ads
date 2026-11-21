@@ -764,13 +764,13 @@ public final class VideoDetailFragment
 
         binding.appBarLayout.addOnOffsetChangedListener((layout, verticalOffset) -> {
             if (verticalOffset != lastAppBarVerticalOffset) {
-                if (verticalOffset < lastAppBarVerticalOffset) {
+                final int diff = verticalOffset - lastAppBarVerticalOffset;
+                if (diff < -4) {
                     setDetailDockVisible(false);
-                } else if (verticalOffset > lastAppBarVerticalOffset || verticalOffset == 0) {
+                } else if (verticalOffset == 0 || diff > 15) {
                     setDetailDockVisible(true);
                 }
                 lastAppBarVerticalOffset = verticalOffset;
-                updateTabLayoutVisibility();
             }
         });
 
@@ -1061,6 +1061,9 @@ public final class VideoDetailFragment
         updateTabLayoutVisibility();
         pageAdapter.notifyDataSetUpdate();
         updateTabIconsAndContentDescriptions();
+        if (binding != null && binding.tabLayout != null) {
+            binding.tabLayout.post(this::updateTabIconsAndContentDescriptions);
+        }
     }
 
     private boolean shouldShowComments() {
@@ -1082,6 +1085,9 @@ public final class VideoDetailFragment
         }
         if (isFullscreen() || pageAdapter == null || pageAdapter.getCount() <= 1) {
             binding.detailDockContainer.setVisibility(View.GONE);
+            if (binding.tabLayout != null) {
+                binding.tabLayout.setVisibility(View.GONE);
+            }
             isDetailDockVisible = false;
             return;
         }
@@ -1091,6 +1097,10 @@ public final class VideoDetailFragment
         isDetailDockVisible = visible;
         binding.detailDockContainer.animate().cancel();
         if (visible) {
+            if (binding.tabLayout != null) {
+                binding.tabLayout.setVisibility(View.VISIBLE);
+                updateTabIconsAndContentDescriptions();
+            }
             binding.detailDockContainer.setVisibility(View.VISIBLE);
             binding.detailDockContainer.animate()
                     .translationY(0f)
@@ -1104,8 +1114,10 @@ public final class VideoDetailFragment
                     : (int) android.util.TypedValue.applyDimension(
                             android.util.TypedValue.COMPLEX_UNIT_DIP, 60,
                             getResources().getDisplayMetrics());
+            final int bottomMargin = binding.detailDockContainer.getLayoutParams() instanceof ViewGroup.MarginLayoutParams
+                    ? ((ViewGroup.MarginLayoutParams) binding.detailDockContainer.getLayoutParams()).bottomMargin : 0;
             binding.detailDockContainer.animate()
-                    .translationY(height + 40)
+                    .translationY(height + bottomMargin + 40)
                     .alpha(0.0f)
                     .setDuration(200)
                     .setInterpolator(new android.view.animation.AccelerateInterpolator())
@@ -1113,6 +1125,9 @@ public final class VideoDetailFragment
                         if (binding != null && binding.detailDockContainer != null
                                 && !isDetailDockVisible) {
                             binding.detailDockContainer.setVisibility(View.GONE);
+                            if (binding.tabLayout != null) {
+                                binding.tabLayout.setVisibility(View.GONE);
+                            }
                         }
                     })
                     .start();
@@ -1128,15 +1143,27 @@ public final class VideoDetailFragment
             if (binding.detailDockContainer != null) {
                 binding.detailDockContainer.setVisibility(View.GONE);
             }
-            binding.tabLayout.setVisibility(View.GONE);
+            if (binding.tabLayout != null) {
+                binding.tabLayout.setVisibility(View.GONE);
+            }
             isDetailDockVisible = false;
         } else if (isDetailDockVisible) {
+            if (binding.tabLayout != null) {
+                binding.tabLayout.setVisibility(View.VISIBLE);
+                updateTabIconsAndContentDescriptions();
+            }
             if (binding.detailDockContainer != null) {
                 binding.detailDockContainer.setVisibility(View.VISIBLE);
                 binding.detailDockContainer.setTranslationY(0f);
                 binding.detailDockContainer.setAlpha(1.0f);
             }
-            binding.tabLayout.setVisibility(View.VISIBLE);
+        } else {
+            if (binding.detailDockContainer != null) {
+                binding.detailDockContainer.setVisibility(View.GONE);
+            }
+            if (binding.tabLayout != null) {
+                binding.tabLayout.setVisibility(View.GONE);
+            }
         }
     }
 

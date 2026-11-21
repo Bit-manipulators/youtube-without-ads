@@ -52,6 +52,18 @@ public abstract class BaseDescriptionFragment extends BaseFragment {
         setupDescription();
         setupMetadata(inflater, binding.detailMetadataLayout);
         addTagsMetadataItem(inflater, binding.detailMetadataLayout);
+        binding.getRoot().setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener)
+                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            final int dy = scrollY - oldScrollY;
+            final androidx.fragment.app.Fragment parent = getParentFragment();
+            if (parent instanceof VideoDetailFragment) {
+                if (dy > 8) {
+                    ((VideoDetailFragment) parent).setDetailDockVisible(false);
+                } else if (dy < -8 || scrollY == 0) {
+                    ((VideoDetailFragment) parent).setDetailDockVisible(true);
+                }
+            }
+        });
         return binding.getRoot();
     }
 

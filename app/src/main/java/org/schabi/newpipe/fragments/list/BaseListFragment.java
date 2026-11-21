@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +29,7 @@ import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 import org.schabi.newpipe.fragments.BaseStateFragment;
 import org.schabi.newpipe.fragments.OnScrollBelowItemsListener;
+import org.schabi.newpipe.fragments.detail.VideoDetailFragment;
 import org.schabi.newpipe.info_list.InfoListAdapter;
 import org.schabi.newpipe.info_list.ItemViewMode;
 import org.schabi.newpipe.info_list.dialog.InfoItemDialog;
@@ -417,14 +419,28 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
         public void onScrolled(@NonNull final RecyclerView recyclerView,
                                final int dx, final int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (Math.abs(dy) > 8 && activity instanceof MainActivity) {
-                if (dy > 0) {
-                    ((MainActivity) activity).setBarsVisible(false);
-                } else if (dy < 0) {
+            final Fragment parent = getParentFragment();
+            if (parent instanceof VideoDetailFragment) {
+                final VideoDetailFragment vdf = (VideoDetailFragment) parent;
+                if (Math.abs(dy) > 8) {
+                    if (dy > 8) {
+                        vdf.setDetailDockVisible(false);
+                    } else if (dy < -8) {
+                        vdf.setDetailDockVisible(true);
+                    }
+                } else if (!recyclerView.canScrollVertically(-1)) {
+                    vdf.setDetailDockVisible(true);
+                }
+            } else if (activity instanceof MainActivity) {
+                if (Math.abs(dy) > 8) {
+                    if (dy > 0) {
+                        ((MainActivity) activity).setBarsVisible(false);
+                    } else if (dy < 0) {
+                        ((MainActivity) activity).setBarsVisible(true);
+                    }
+                } else if (!recyclerView.canScrollVertically(-1)) {
                     ((MainActivity) activity).setBarsVisible(true);
                 }
-            } else if (!recyclerView.canScrollVertically(-1) && activity instanceof MainActivity) {
-                ((MainActivity) activity).setBarsVisible(true);
             }
         }
 

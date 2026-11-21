@@ -63,14 +63,18 @@ jobs:
         TAG="${{ env.RELEASE_TAG }}"
         echo "Updating README for release $TAG..."
 
-        # Update download link references and version strings in doc/README.md
-        sed -i -E "s/AdFreeYT_v[0-9]+(\.[0-9]+)*\.apk/AdFreeYT_${TAG}.apk/g" doc/README.md
-        sed -i -E "s/Download AdFreeYT v[0-9]+(\.[0-9]+)* APK/Download AdFreeYT ${TAG} APK/g" doc/README.md
-        sed -i -E "s/What's New in v[0-9]+(\.[0-9]+)*/What's New in ${TAG}/g" doc/README.md
+        # Update download link references and version strings in both README.md and doc/README.md
+        for file in README.md doc/README.md; do
+          if [ -f "$file" ]; then
+            sed -i -E "s/AdFreeYT_(latest|v[0-9]+(\.[0-9]+)*)\.apk/AdFreeYT_${TAG}.apk/g" "$file"
+            sed -i -E "s/Download (Latest )?AdFreeYT( v[0-9]+(\.[0-9]+)*)? APK/Download AdFreeYT ${TAG} APK/g" "$file"
+            sed -i -E "s/What's New in v[0-9]+(\.[0-9]+)*/What's New in ${TAG}/g" "$file"
+          fi
+        done
 
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add doc/README.md
+        git add README.md doc/README.md
         if ! git diff --staged --quiet; then
           git commit -m "docs: dynamically update README for release ${TAG} [skip ci]"
           git push origin HEAD:newpipe
