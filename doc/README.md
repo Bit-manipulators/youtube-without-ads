@@ -101,7 +101,7 @@
 
 ---
 
-## 🚀 What's New in v4.11
+## 🚀 What's New in v4.13
 
 - **Fixed Bottom Dock on Video Page**: Main bottom dock now hides completely and reliably when clicking and playing any video; stays hidden while video details and comments are open.
 - **Fixed Fullscreen 1-Second Glitch**: Preserves activity state across orientation changes (`configChanges`), eliminating the glitch where fullscreen would automatically kick back to portrait after 1 second.
