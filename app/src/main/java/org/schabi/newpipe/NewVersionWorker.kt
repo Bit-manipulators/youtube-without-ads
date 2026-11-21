@@ -36,24 +36,13 @@ class NewVersionWorker(
      * @param apkLocationUrl Url with the new apk
      * @param versionCode    Code of new version
      */
-    private fun isNewerVersion(remote: String, local: String): Boolean {
-        val rParts = remote.removePrefix("v").split(".").mapNotNull { it.toIntOrNull() }
-        val lParts = local.removePrefix("v").split(".").mapNotNull { it.toIntOrNull() }
-        val maxLen = maxOf(rParts.size, lParts.size)
-        for (i in 0 until maxLen) {
-            val r = rParts.getOrElse(i) { 0 }
-            val l = lParts.getOrElse(i) { 0 }
-            if (r > l) return true
-            if (r < l) return false
-        }
-        return false
-    }
-
     private fun compareAppVersionAndShowNotification(
         versionName: String,
         apkLocationUrl: String?
     ) {
-        if (!isNewerVersion(versionName, BuildConfig.VERSION_NAME)) {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        if (!ReleaseVersionUtil.isNewerVersion(versionName, BuildConfig.VERSION_NAME)) {
+            prefs.edit().remove("latest_available_version").remove("latest_available_apk_url").apply()
             if (inputData.getBoolean(IS_MANUAL, false)) {
                 // Show toast stating that the app is up-to-date if the update check was manual.
                 ContextCompat.getMainExecutor(applicationContext).execute {
@@ -66,6 +55,12 @@ class NewVersionWorker(
             }
             return
         }
+
+        // Store latest version info so MainActivity can show an in-app update prompt
+        prefs.edit()
+            .putString("latest_available_version", versionName)
+            .putString("latest_available_apk_url", apkLocationUrl)
+            .apply()
 
         // A pending intent to open the apk location url in the browser.
         val intent = Intent(Intent.ACTION_VIEW, (apkLocationUrl ?: GITHUB_RELEASES_LATEST_PAGE).toUri())

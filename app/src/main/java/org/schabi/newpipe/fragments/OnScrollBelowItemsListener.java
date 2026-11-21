@@ -32,7 +32,7 @@ public abstract class OnScrollBelowItemsListener extends RecyclerView.OnScrollLi
                 }
             }
 
-            if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
+            if ((visibleItemCount + pastVisibleItems) >= (totalItemCount - 6)) {
                 onScrolledDown(recyclerView);
             }
         }

@@ -1,5 +1,6 @@
 package org.schabi.newpipe.player.gesture
 
+import android.content.pm.ActivityInfo
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -174,13 +175,16 @@ class MainPlayerGestureListener(
             val diffY = e2.y - e1.y
             val diffX = e2.x - e1.x
             if (abs(diffY) > abs(diffX) && abs(diffY) > 60 && abs(velocityY) > 100) {
+                val act = player.context as? AppCompatActivity
                 if (diffY < 0 && !playerUi.isFullscreen) {
-                    // Swiping up when not in fullscreen -> make full screen
+                    // Swiping up when not in fullscreen -> make full screen in landscape mode
+                    act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                     playerUi.toggleFullscreen()
                     return true
                 } else if (diffY > 0 && playerUi.isFullscreen) {
-                    // Swiping down when in fullscreen -> rotate video to normal / exit fullscreen
+                    // Swiping down when in fullscreen -> rotate video to normal portrait / exit fullscreen
                     playerUi.toggleFullscreen()
+                    act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
                     return true
                 }
             }
@@ -198,11 +202,13 @@ class MainPlayerGestureListener(
             return false
         }
 
-        // When NOT in fullscreen: swipe up to enter fullscreen
+        // When NOT in fullscreen: swipe up to enter fullscreen in landscape
         if (!playerUi.isFullscreen) {
             val diffY = initialEvent.y - movingEvent.y
             val diffX = movingEvent.x - initialEvent.x
             if (diffY > 50 && abs(diffY) > abs(diffX)) {
+                val act = player.context as? AppCompatActivity
+                act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 playerUi.toggleFullscreen()
                 return true
             }
@@ -244,6 +250,8 @@ class MainPlayerGestureListener(
                 val diffY = movingEvent.y - initialEvent.y
                 if (diffY > 50) {
                     playerUi.toggleFullscreen()
+                    val act = player.context as? AppCompatActivity
+                    act?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
                     isMoving = false
                 }
             }

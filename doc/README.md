@@ -3,15 +3,15 @@
 # 🎬 AdFreeYT
 
 <!-- BIG ORIGINAL DOWNLOAD BUTTON -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk">
-  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.9 APK"/>
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk">
+  <img src="assets/badges/download-apk-button.svg" width="380" alt="Download AdFreeYT v4.10 APK"/>
 </a>
 
 <br/>
 <br/>
 
 <!-- OFFICIAL STORE / GITHUB BADGES -->
-<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk">
+<a href="https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk">
   <img src="assets/badges/download-android-apk.svg" height="60" alt="Download Android APK"/>
 </a>
 &nbsp;&nbsp;
@@ -95,18 +95,17 @@
 
 ---
 
-## 🚀 What's New in v4.9
+## 🚀 What's New in v4.10
 
-- **Video Detail Dock**: New glass floating dock with quick tabs for current running video content (Video / Related, Description, and Comments).
-- **Fullscreen Swipe Gestures**: Swipe up on any video to enter fullscreen; swipe down in fullscreen to rotate back to normal.
-- **3-Zone Fullscreen Controls**: Screen partitioned into three intuitive touch zones:
-  - Left 1/3: Brightness adjustments.
-  - Middle 1/3: Minimizing and exiting fullscreen on downward swipe.
-  - Right 1/3: Volume adjustments.
-- **Search Navigation & Back Button**: Added dedicated back arrow to search bar and fixed back navigation across search suggestions and results.
-- **Tab Navigation Glitch Fix**: Fixed multi-tab triggering and unexpected redirects when switching tabs from the search page.
-- **Instant Feed Tab Switching**: Kept feed page cached in memory when switching to history and back, completely eliminating unnecessary reloading.
-- **Controller Spacing Fix**: Resolved empty top spacing in portrait video controller.
+- **Search Header & Seamless Scroll**: Fixed empty black space during search scrolling; search bar and "showing results for..." header slide away together with results scrolling cleanly to the top.
+- **Search Back Button & Navigation**: Added fully responsive back arrow and fixed hardware back navigation from search directly to the feed.
+- **Tab Switching & Blank Screen Fix**: Resolved blank screen issue when switching tabs; now recreates adapter cleanly and synchronizes bottom dock with ViewPager without listener conflicts.
+- **Direct Save & History Navigation from Search**: Bottom dock buttons (Saved, History, Feed) now work immediately when pressed from the search page.
+- **Infinite Feed Prefetching (Zero Buffering)**: Pre-loads next feed items 6 items before hitting the bottom, increasing feed batch sizes to 30 items for smooth, endless scrolling without buffering pauses.
+- **In-App Update Prompt & Fast Checks**: Added in-app update dialog so users are immediately notified of new releases even if notification tray permissions are disabled.
+- **Player Dock & Transparent Navigation Bar**: Main bottom dock hides completely when expanding video detail; navigation bar stays 100% transparent with immersive edge-to-edge drawing.
+- **Swipe Gestures to Fullscreen Landscape**: Swiping up enters fullscreen in landscape mode; swiping down exits fullscreen and rotates back to normal portrait mode.
+- **Strict Portrait Lock Outside Fullscreen**: App rotation is strictly locked to portrait across all screens, rotating to landscape ONLY during fullscreen video playback.
 
 ---
 
@@ -114,8 +113,8 @@
 
 ### Option 1: Direct Download (Standard Android)
 
-1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
-2. Download `AdFreeYT_v4.9.apk`.
+1. Tap the [**Big Download Button**](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk) above or visit [Releases](https://github.com/Bit-manipulators/youtube-without-ads/releases/latest).
+2. Download `AdFreeYT_v4.10.apk`.
 3. Open the downloaded file and select **Install** (allow "Install from Unknown Sources" if prompted).
 
 ### Option 2: Termux
@@ -124,10 +123,10 @@ If you are running Termux with storage permission:
 
 ```bash
 # Download latest release directly
-curl -L -o AdFreeYT_v4.9.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.9.apk
+curl -L -o AdFreeYT_v4.10.apk https://github.com/Bit-manipulators/youtube-without-ads/releases/latest/download/AdFreeYT_v4.10.apk
 
 # Install via Android Package Installer
-termux-open AdFreeYT_v4.9.apk
+termux-open AdFreeYT_v4.10.apk
 ```
 
 ---

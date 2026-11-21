@@ -253,17 +253,26 @@ public final class SuggestionEngine {
             final List<String> topics = new ArrayList<>();
             topics.add(getNextSuggestionTopic());
             topics.add(getNextSuggestionTopic());
+            topics.add(getNextSuggestionTopic());
             return topics;
         }).flatMap(topics -> {
-            final Single<List<StreamInfoItem>> q1 = fetchVideosForQuery(serviceId, topics.get(0));
-            final Single<List<StreamInfoItem>> q2 = fetchVideosForQuery(serviceId, topics.get(1));
-            return Single.zip(q1, q2, (list1, list2) -> {
+            final Single<List<StreamInfoItem>> q1 = fetchVideosForQuery(serviceId, topics.get(0))
+                    .onErrorReturnItem(Collections.emptyList());
+            final Single<List<StreamInfoItem>> q2 = fetchVideosForQuery(serviceId, topics.get(1))
+                    .onErrorReturnItem(Collections.emptyList());
+            final Single<List<StreamInfoItem>> q3 = fetchVideosForQuery(serviceId, topics.get(2))
+                    .onErrorReturnItem(Collections.emptyList());
+
+            return Single.zip(q1, q2, q3, (list1, list2, list3) -> {
                 final List<StreamInfoItem> combined = new ArrayList<>();
                 if (list1 != null) {
                     combined.addAll(list1);
                 }
                 if (list2 != null) {
                     combined.addAll(list2);
+                }
+                if (list3 != null) {
+                    combined.addAll(list3);
                 }
 
                 final List<StreamInfoItem> result = new ArrayList<>();
@@ -316,7 +325,7 @@ public final class SuggestionEngine {
                     final List<StreamInfoItem> cleanTrending =
                             filterLiveStreams(kioskInfo.getRelatedItems());
 
-                    return fetchRecommendations(serviceId, null, 10)
+                    return fetchRecommendations(serviceId, null, 25)
                             .onErrorReturnItem(Collections.emptyList())
                             .map(randomVideos -> {
                                 final List<StreamInfoItem> finalFeed = new ArrayList<>();

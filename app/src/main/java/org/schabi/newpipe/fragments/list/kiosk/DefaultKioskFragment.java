@@ -78,7 +78,7 @@ public class DefaultKioskFragment extends KioskFragment {
 
     private Single<ListExtractor.InfoItemsPage<StreamInfoItem>> fetchMoreHomeFeedItems() {
         final int nextPageNum = pageCounter++;
-        return SuggestionEngine.fetchRecommendations(serviceId, seenUrls, 12)
+        return SuggestionEngine.fetchRecommendations(serviceId, seenUrls, 30)
                 .onErrorReturnItem(Collections.emptyList())
                 .map(items -> new ListExtractor.InfoItemsPage<>(
                         items != null ? items : Collections.emptyList(),

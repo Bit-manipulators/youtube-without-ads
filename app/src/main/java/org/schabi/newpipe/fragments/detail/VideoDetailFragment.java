@@ -1144,6 +1144,9 @@ public final class VideoDetailFragment
     }
 
     public void minimizeToFloatingPlayer() {
+        if (activity != null && !DeviceUtils.isTv(activity)) {
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        }
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).showFloatingPlayer();
         } else if (bottomSheetBehavior != null) {
@@ -1581,8 +1584,8 @@ public final class VideoDetailFragment
             toggleFullscreenIfInFullscreenMode();
         }
 
-        if (activity != null) {
-            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        if (activity != null && !DeviceUtils.isTv(activity)) {
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
         }
     }
 
@@ -2017,6 +2020,14 @@ public final class VideoDetailFragment
             return;
         }
 
+        if (activity != null && !DeviceUtils.isTv(activity)) {
+            if (fullscreen) {
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            } else {
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+            }
+        }
+
         if (fullscreen) {
             hideSystemUiIfNeeded();
             binding.overlayPlayPauseButton.requestFocus();
@@ -2040,29 +2051,13 @@ public final class VideoDetailFragment
             return;
         }
 
-        final boolean isLandscape = DeviceUtils.isLandscape(activity);
         final boolean isFs = isFullscreen();
-
-        if (isFs || isLandscape) {
-            if (isFs) {
-                player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
-            }
-            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (activity != null) {
-                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                }
-            }, 800);
+        if (isFs) {
+            player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
         } else {
-            if (!isFs) {
-                player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
-            }
             activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (activity != null) {
-                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                }
-            }, 800);
+            player.UIs().get(MainPlayerUi.class).ifPresent(MainPlayerUi::toggleFullscreen);
         }
     }
 
@@ -2104,7 +2099,6 @@ public final class VideoDetailFragment
             activity.getWindow().getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
         }
-        activity.getWindow().getDecorView().setSystemUiVisibility(0);
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).setGlassStatusBarVisible(true);

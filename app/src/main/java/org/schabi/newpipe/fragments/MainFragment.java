@@ -126,12 +126,22 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         binding = FragmentMainBinding.bind(rootView);
         binding.pager.setOffscreenPageLimit(4);
 
-        final ScrollableTabLayout tabLayout = getTabLayout();
-        if (tabLayout != null) {
-            tabLayout.setupWithViewPager(binding.pager);
-            tabLayout.removeOnTabSelectedListener(this);
-            tabLayout.addOnTabSelectedListener(this);
-        }
+        binding.pager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(final int position) {
+                updateTitleForTab(position);
+                if (activity instanceof MainActivity) {
+                    ((MainActivity) activity).setBarsVisible(true);
+                }
+                final ScrollableTabLayout tl = getTabLayout();
+                if (tl != null) {
+                    final TabLayout.Tab tab = tl.getTabAt(position);
+                    if (tab != null && !tab.isSelected()) {
+                        tab.select();
+                    }
+                }
+            }
+        });
 
         setupTabs();
         updateTabLayoutPosition();
@@ -159,6 +169,10 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
                     final int target = pendingTabPosition;
                     pendingTabPosition = -1;
                     setSelectedTab(target);
+                    final TabLayout.Tab tab = tabLayout.getTabAt(target);
+                    if (tab != null && !tab.isSelected()) {
+                        tab.select();
+                    }
                 } else {
                     final TabLayout.Tab tab = tabLayout.getTabAt(binding.pager.getCurrentItem());
                     if (tab != null && !tab.isSelected()) {
@@ -182,10 +196,10 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        final ScrollableTabLayout tabLayout = getTabLayout();
-        if (tabLayout != null) {
-            tabLayout.removeOnTabSelectedListener(this);
+        if (binding != null && binding.pager != null) {
+            binding.pager.setAdapter(null);
         }
+        pagerAdapter = null;
         binding = null;
     }
 
@@ -231,15 +245,27 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
         tabsList.clear();
         tabsList.addAll(tabsManager.getTabs());
 
-        if (pagerAdapter == null || !pagerAdapter.sameTabs(tabsList)) {
-            pagerAdapter = new SelectedTabsPagerAdapter(requireContext(),
-                    getChildFragmentManager(), tabsList);
-            binding.pager.setAdapter(pagerAdapter);
+        pagerAdapter = new SelectedTabsPagerAdapter(requireContext(),
+                getChildFragmentManager(), tabsList);
+        binding.pager.setAdapter(pagerAdapter);
+
+        final ScrollableTabLayout tabLayout = getTabLayout();
+        if (tabLayout != null) {
+            if (tabLayout.getTabCount() != tabsList.size()) {
+                tabLayout.removeAllTabs();
+                for (int i = 0; i < tabsList.size(); i++) {
+                    final Tab tab = tabsList.get(i);
+                    final TabLayout.Tab newTab = tabLayout.newTab();
+                    newTab.setIcon(tab.getTabIconRes(requireContext()));
+                    newTab.setContentDescription(tab.getTabName(requireContext()));
+                    tabLayout.addTab(newTab, i == binding.pager.getCurrentItem());
+                }
+            } else {
+                updateTabsIconAndDescription();
+            }
         }
 
-        updateTabsIconAndDescription();
         updateTitleForTab(binding.pager.getCurrentItem());
-
         hasTabsChanged = false;
     }
 
@@ -293,7 +319,8 @@ public class MainFragment extends BaseFragment implements TabLayout.OnTabSelecte
     public void setSelectedTab(final int position) {
         if (binding != null && binding.pager != null && pagerAdapter != null
                 && position >= 0 && position < pagerAdapter.getCount()) {
-            binding.pager.setCurrentItem(position, true);
+            binding.pager.setCurrentItem(position, false);
+            updateTitleForTab(position);
         }
     }
 

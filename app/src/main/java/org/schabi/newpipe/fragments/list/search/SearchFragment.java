@@ -329,6 +329,9 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
             Log.d(TAG, "onDestroyView() called");
         }
         unsetSearchListeners();
+        if (searchToolbarContainer != null) {
+            searchToolbarContainer.setVisibility(View.GONE);
+        }
 
         searchBinding = null;
         super.onDestroyView();
@@ -383,11 +386,11 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
             itemsList.setClipToPadding(false);
             itemsList.setPadding(itemsList.getPaddingLeft(), topPadding, itemsList.getPaddingRight(), bottomPadding);
         }
-        if (searchBinding != null && searchBinding.correctSuggestion != null) {
-            final ViewGroup.LayoutParams lp = searchBinding.correctSuggestion.getLayoutParams();
+        if (searchBinding != null && searchBinding.searchHeaderContainer != null) {
+            final ViewGroup.LayoutParams lp = searchBinding.searchHeaderContainer.getLayoutParams();
             if (lp instanceof ViewGroup.MarginLayoutParams) {
                 ((ViewGroup.MarginLayoutParams) lp).topMargin = topPadding;
-                searchBinding.correctSuggestion.setLayoutParams(lp);
+                searchBinding.searchHeaderContainer.setLayoutParams(lp);
             }
         }
 
@@ -402,6 +405,13 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
                         : (int) android.util.TypedValue.applyDimension(
                                 android.util.TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics()));
                 final int dynamicTopPadding = sbHeight + abHeight;
+                if (searchBinding != null && searchBinding.searchHeaderContainer != null) {
+                    final ViewGroup.LayoutParams lp = searchBinding.searchHeaderContainer.getLayoutParams();
+                    if (lp instanceof ViewGroup.MarginLayoutParams) {
+                        ((ViewGroup.MarginLayoutParams) lp).topMargin = dynamicTopPadding;
+                        searchBinding.searchHeaderContainer.setLayoutParams(lp);
+                    }
+                }
                 if (searchBinding != null && searchBinding.suggestionsList != null) {
                     searchBinding.suggestionsList.setClipToPadding(false);
                     searchBinding.suggestionsList.setPadding(0, dynamicTopPadding, 0, bottomPadding);
@@ -611,7 +621,11 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         if (searchBack != null) {
             searchBack.setOnClickListener(v -> {
                 hideKeyboardSearch();
-                NavigationHelper.gotoMainFragment(getFM());
+                if (activity != null) {
+                    activity.onBackPressed();
+                } else {
+                    NavigationHelper.gotoMainFragment(getFM());
+                }
             });
             TooltipCompat.setTooltipText(searchBack, getString(R.string.back));
         }
@@ -621,11 +635,16 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
                 Log.d(TAG, "onClick() called with: v = [" + v + "]");
             }
             if (isSearchEditBlank()) {
-                NavigationHelper.gotoMainFragment(getFM());
+                if (activity != null) {
+                    activity.onBackPressed();
+                } else {
+                    NavigationHelper.gotoMainFragment(getFM());
+                }
                 return;
             }
 
             searchBinding.correctSuggestion.setVisibility(View.GONE);
+            updateHeaderContainerVisibility();
 
             searchEditText.setText("");
             suggestionListAdapter.submitList(null);
@@ -814,11 +833,44 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
                 searchEditText.setText(lastSearchedString);
                 return true;
             }
-            NavigationHelper.gotoMainFragment(getFM());
+            NavigationHelper.gotoMainFragment(activity != null ? activity.getSupportFragmentManager() : getFM());
             return true;
         }
-        NavigationHelper.gotoMainFragment(getFM());
+        NavigationHelper.gotoMainFragment(activity != null ? activity.getSupportFragmentManager() : getFM());
         return true;
+    }
+
+    public void updateHeaderContainerVisibility() {
+        if (searchBinding == null || searchBinding.searchHeaderContainer == null) {
+            return;
+        }
+        final boolean showSuggestion = searchBinding.correctSuggestion.getVisibility() == View.VISIBLE;
+        final boolean showMeta = searchBinding.searchMetaInfoTextView.getVisibility() == View.VISIBLE;
+        searchBinding.searchHeaderContainer.setVisibility((showSuggestion || showMeta) ? View.VISIBLE : View.GONE);
+    }
+
+    public void onBarsVisibilityChanged(final boolean visible) {
+        if (searchBinding == null || searchBinding.searchHeaderContainer == null) {
+            return;
+        }
+        searchBinding.searchHeaderContainer.animate().cancel();
+        if (visible) {
+            searchBinding.searchHeaderContainer.animate()
+                    .translationY(0f)
+                    .alpha(1f)
+                    .setDuration(250)
+                    .setInterpolator(new DecelerateInterpolator(1.8f))
+                    .start();
+        } else {
+            final int height = searchBinding.searchHeaderContainer.getHeight() > 0
+                    ? searchBinding.searchHeaderContainer.getHeight() : 200;
+            searchBinding.searchHeaderContainer.animate()
+                    .translationY(-height - 120)
+                    .alpha(0f)
+                    .setDuration(250)
+                    .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+                    .start();
+        }
     }
 
 
@@ -1181,6 +1233,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
 
             searchBinding.correctSuggestion.setOnClickListener(v -> {
                 searchBinding.correctSuggestion.setVisibility(View.GONE);
+                updateHeaderContainerVisibility();
                 search(searchSuggestion, contentFilter, sortFilter);
                 searchEditText.setText(searchSuggestion);
             });
@@ -1194,6 +1247,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
 
             searchBinding.correctSuggestion.setVisibility(View.VISIBLE);
         }
+        updateHeaderContainerVisibility();
     }
 
     @Override

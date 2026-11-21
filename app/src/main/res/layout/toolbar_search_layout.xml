@@ -16,18 +16,13 @@
 
     <FrameLayout
         android:id="@+id/toolbar_search_back"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_gravity="center_vertical"
         android:contentDescription="@string/back"
         android:clickable="true"
-        android:focusable="true">
-
-        <View
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
 
         <ImageView
             android:id="@+id/toolbar_search_back_icon"
@@ -59,31 +54,17 @@
         android:nextFocusDown="@+id/suggestions_list"
         android:theme="@style/ToolbarSearchInputTheme" />
 
-    <FrameLayout
+    <ImageButton
         android:id="@+id/toolbar_search_clear"
         android:layout_width="38dp"
         android:layout_height="38dp"
         android:layout_gravity="center_vertical"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/clear"
-        android:clickable="true"
-        android:focusable="true">
-
-        <View
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:background="?attr/selectableItemBackgroundBorderless" />
-
-        <ImageView
-            android:id="@+id/toolbar_search_clear_icon"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_gravity="center"
-            android:contentDescription="@string/clear"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_close"
-            app:tint="?attr/toolbarSearchColor"
-            tools:ignore="RtlHardcoded" />
-    </FrameLayout>
+        android:scaleType="center"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"
+        app:tint="?attr/toolbarSearchColor"
+        tools:visibility="visible" />
 
 </LinearLayout>

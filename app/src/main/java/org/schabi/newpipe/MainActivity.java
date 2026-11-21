@@ -28,6 +28,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -238,16 +239,20 @@ public class MainActivity extends AppCompatActivity {
             return windowInsets;
         });
 
+        if (!DeviceUtils.isTv(this)) {
+            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        }
+
         if (mainBinding.mainTabLayout != null) {
             mainBinding.mainTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
                 public void onTabSelected(final TabLayout.Tab tab) {
                     final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
-                    if (!(currentFrag instanceof MainFragment)) {
+                    if (currentFrag instanceof MainFragment) {
+                        ((MainFragment) currentFrag).setSelectedTab(tab.getPosition());
+                    } else {
                         MainFragment.setPendingTab(tab.getPosition());
                         NavigationHelper.gotoMainFragment(getSupportFragmentManager());
-                    } else {
-                        ((MainFragment) currentFrag).setSelectedTab(tab.getPosition());
                     }
                 }
 
@@ -257,7 +262,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onTabReselected(final TabLayout.Tab tab) {
                     final Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
-                    if (!(currentFrag instanceof MainFragment)) {
+                    if (currentFrag instanceof MainFragment) {
+                        ((MainFragment) currentFrag).setSelectedTab(tab.getPosition());
+                    } else {
                         MainFragment.setPendingTab(tab.getPosition());
                         NavigationHelper.gotoMainFragment(getSupportFragmentManager());
                     }
@@ -281,6 +288,12 @@ public class MainActivity extends AppCompatActivity {
             toolbarLayoutBinding.toolbarSettingsButton.setOnClickListener(v ->
                     NavigationHelper.openSettings(this));
         }
+        if (toolbarLayoutBinding.toolbarSearchContainer != null) {
+            final View searchBackBtn = toolbarLayoutBinding.toolbarSearchContainer.toolbarSearchBack;
+            if (searchBackBtn != null) {
+                searchBackBtn.setOnClickListener(v -> onHomeButtonPressed());
+            }
+        }
         getSupportFragmentManager().addOnBackStackChangedListener(this::updateDrawerNavigation);
         try {
             setupDrawer();
@@ -301,11 +314,22 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
                             if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                                if (mainBinding != null && mainBinding.bottomDockContainer != null) {
+                                    mainBinding.bottomDockContainer.setVisibility(View.GONE);
+                                }
+                                if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
+                                    toolbarLayoutBinding.getRoot().setVisibility(View.GONE);
+                                }
                                 setBarsVisible(false);
                             } else if (newState == BottomSheetBehavior.STATE_COLLAPSED
                                     || newState == BottomSheetBehavior.STATE_HIDDEN) {
-                                if (mainBinding.bottomDockContainer != null) {
+                                if (mainBinding != null && mainBinding.bottomDockContainer != null) {
+                                    mainBinding.bottomDockContainer.setVisibility(View.VISIBLE);
                                     mainBinding.bottomDockContainer.setTranslationY(0f);
+                                }
+                                if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
+                                    toolbarLayoutBinding.getRoot().setVisibility(View.VISIBLE);
+                                    toolbarLayoutBinding.getRoot().setTranslationY(0f);
                                 }
                                 setBarsVisible(true);
                             }
@@ -364,6 +388,7 @@ public class MainActivity extends AppCompatActivity {
 
         final App app = App.getInstance();
         NewVersionWorker.enqueueNewVersionCheckingWork(app, false);
+        checkAndShowInAppUpdatePrompt();
     }
 
     @Override
@@ -371,6 +396,38 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         sharedPrefEditor.putBoolean(KEY_IS_IN_BACKGROUND, false).apply();
         Log.d(TAG, "App moved to foreground");
+        checkAndShowInAppUpdatePrompt();
+    }
+
+    public void checkAndShowInAppUpdatePrompt() {
+        try {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            final String latestVersion = prefs.getString("latest_available_version", null);
+            final String apkUrl = prefs.getString("latest_available_apk_url", null);
+            final String dismissedVersion = prefs.getString("dismissed_update_version", null);
+            if (!TextUtils.isEmpty(latestVersion) && !TextUtils.equals(latestVersion, dismissedVersion)) {
+                if (ReleaseVersionUtil.INSTANCE.isNewerVersion(latestVersion, BuildConfig.VERSION_NAME)) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("AdFreeYT Update Available")
+                            .setMessage("Version " + latestVersion + " is available with latest bug fixes & improvements.\n\nUpdate now with zero data loss.")
+                            .setPositiveButton("Update Now", (d, w) -> {
+                                final String url = !TextUtils.isEmpty(apkUrl) ? apkUrl
+                                        : "https://github.com/Bit-manipulators/youtube-without-ads/releases/latest";
+                                final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            })
+                            .setNegativeButton("Later", (d, w) -> {
+                                prefs.edit().putString("dismissed_update_version", latestVersion).apply();
+                                d.dismiss();
+                            })
+                            .setCancelable(true)
+                            .show();
+                }
+            }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error checking in-app update prompt", e);
+        }
     }
 
     @Override
@@ -976,6 +1033,11 @@ public class MainActivity extends AppCompatActivity {
                         .start();
             }
         }
+
+        final Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
+        if (currentFragment instanceof SearchFragment) {
+            ((SearchFragment) currentFragment).onBarsVisibilityChanged(visible);
+        }
     }
 
     public org.schabi.newpipe.views.ScrollableTabLayout getMainTabLayout() {
@@ -998,24 +1060,44 @@ public class MainActivity extends AppCompatActivity {
         final Fragment fragment = getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_holder);
         final View holder = findViewById(R.id.fragment_holder);
-        if (fragment instanceof MainFragment || fragment instanceof SearchFragment) {
+        if (fragment instanceof MainFragment) {
+            if (toolbarLayoutBinding.toolbarSearchContainer != null) {
+                toolbarLayoutBinding.toolbarSearchContainer.getRoot().setVisibility(View.GONE);
+            }
+            if (toolbarLayoutBinding.toolbarTitleContainer != null) {
+                toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
+            }
             getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setTitle(null);
             toolbarLayoutBinding.toolbar.setTitle(null);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            if (fragment instanceof MainFragment) {
-                if (toolbarLayoutBinding.toolbarTitleContainer != null) {
-                    toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.VISIBLE);
-                }
-                toolbarLayoutBinding.toolbar.setNavigationIcon(null);
-                mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
+            toolbarLayoutBinding.toolbar.setNavigationIcon(null);
+            mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
 
-                final MainFragment mainFragment = (MainFragment) fragment;
-                updateToolbarBranding(mainFragment.isCurrentTabHistory());
-            } else {
-                updateToolbarBranding(false);
-                mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            final MainFragment mainFragment = (MainFragment) fragment;
+            updateToolbarBranding(mainFragment.isCurrentTabHistory());
+
+            if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+                final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
+                if (lp.topMargin != 0) {
+                    lp.topMargin = 0;
+                    holder.setLayoutParams(lp);
+                }
             }
+        } else if (fragment instanceof SearchFragment) {
+            if (toolbarLayoutBinding.toolbarTitleContainer != null) {
+                toolbarLayoutBinding.toolbarTitleContainer.setVisibility(View.GONE);
+            }
+            if (toolbarLayoutBinding.toolbarSearchContainer != null) {
+                toolbarLayoutBinding.toolbarSearchContainer.getRoot().setVisibility(View.VISIBLE);
+            }
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            getSupportActionBar().setTitle(null);
+            toolbarLayoutBinding.toolbar.setTitle(null);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            toolbarLayoutBinding.toolbar.setNavigationIcon(null);
+            mainBinding.getRoot().setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            updateToolbarBranding(false);
 
             if (holder != null && holder.getLayoutParams() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
                 final var lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) holder.getLayoutParams();
@@ -1372,6 +1454,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onExpandingMainPlayer() {
+        if (mainBinding != null && mainBinding.bottomDockContainer != null) {
+            mainBinding.bottomDockContainer.setVisibility(View.GONE);
+        }
+        if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
+            toolbarLayoutBinding.getRoot().setVisibility(View.GONE);
+        }
         if (isFloatingPlayerActive()) {
             floatingControlsHandler.removeCallbacks(hideFloatingControlsRunnable);
             isFloatingPlayerActive = false;
@@ -1399,6 +1487,14 @@ public class MainActivity extends AppCompatActivity {
         if (mainBinding != null) {
             mainBinding.inAppFloatingPlayer.setVisibility(View.GONE);
             mainBinding.floatingPlayerContainer.removeAllViews();
+            if (mainBinding.bottomDockContainer != null) {
+                mainBinding.bottomDockContainer.setVisibility(View.VISIBLE);
+                mainBinding.bottomDockContainer.setTranslationY(0f);
+            }
+        }
+        if (toolbarLayoutBinding != null && toolbarLayoutBinding.getRoot() != null) {
+            toolbarLayoutBinding.getRoot().setVisibility(View.VISIBLE);
+            toolbarLayoutBinding.getRoot().setTranslationY(0f);
         }
 
         try {
