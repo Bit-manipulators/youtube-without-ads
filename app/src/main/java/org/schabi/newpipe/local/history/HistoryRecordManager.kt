@@ -139,6 +139,7 @@ class HistoryRecordManager(context: Context) {
 
                 // Ensure an initial stream state exists so watch progress is tracked for clicked videos
                 streamStateTable.silentInsertInternal(StreamStateEntity(streamId, 1000L))
+                streamId
             }
         }
     }
