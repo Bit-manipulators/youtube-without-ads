@@ -100,6 +100,8 @@ public abstract class BaseListFragment<I, N> extends BaseStateFragment<I>
                 refreshItemViewMode();
             }
             updateFlags = 0;
+        } else if (infoListAdapter != null && infoListAdapter.getItemCount() > 0) {
+            infoListAdapter.notifyDataSetChanged();
         }
     }
 

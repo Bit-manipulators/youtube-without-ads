@@ -280,6 +280,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         }
         disposables.clear();
         hideKeyboardSearch();
+        updateClearSearchButton();
     }
 
     @Override
@@ -319,6 +320,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
             showSuggestionsPanel();
         } else {
             hideKeyboardSearch();
+        updateClearSearchButton();
             hideSuggestionsPanel();
         }
         wasSearchFocused = false;
@@ -625,6 +627,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         if (searchBack != null) {
             searchBack.setOnClickListener(v -> {
                 hideKeyboardSearch();
+        updateClearSearchButton();
                 hideSuggestionsPanel();
                 final FragmentManager fm = activity != null ? activity.getSupportFragmentManager() : getFM();
                 if (fm != null && fm.getBackStackEntryCount() > 1) {
@@ -643,24 +646,17 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
             if (DEBUG) {
                 Log.d(TAG, "onClick() called with: v = [" + v + "]");
             }
-            if (isSearchEditBlank()) {
-                if (activity != null) {
-                    activity.onBackPressed();
-                } else {
-                    NavigationHelper.gotoMainFragment(getFM());
-                }
-                return;
-            }
-
             searchBinding.correctSuggestion.setVisibility(View.GONE);
             updateHeaderContainerVisibility();
 
             searchEditText.setText("");
             suggestionListAdapter.submitList(null);
+            updateClearSearchButton();
             showKeyboardSearch();
         });
 
         TooltipCompat.setTooltipText(searchClear, getString(R.string.clear));
+        updateClearSearchButton();
 
         searchEditText.setOnClickListener(v -> {
             if (DEBUG) {
@@ -731,6 +727,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
 
                 final String newText = getSearchEditString().trim();
                 suggestionPublisher.onNext(newText);
+                updateClearSearchButton();
             }
         };
         searchEditText.addTextChangedListener(textWatcher);
@@ -742,6 +739,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
                     }
                     if (actionId == EditorInfo.IME_ACTION_PREVIOUS) {
                         hideKeyboardSearch();
+        updateClearSearchButton();
                     } else if (event != null
                             && (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
                             || event.getAction() == EditorInfo.IME_ACTION_SEARCH)) {
@@ -774,6 +772,14 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
             searchEditText.removeTextChangedListener(textWatcher);
         }
         textWatcher = null;
+    }
+
+    private void updateClearSearchButton() {
+        if (searchClear != null) {
+            final boolean hasText = searchEditText != null
+                    && !TextUtils.isEmpty(searchEditText.getText());
+            searchClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void showSuggestionsPanel() {
@@ -838,12 +844,14 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         if (suggestionsPanelVisible) {
             hideSuggestionsPanel();
             hideKeyboardSearch();
+        updateClearSearchButton();
             if (!infoListAdapter.getItemsList().isEmpty()) {
                 searchEditText.setText(lastSearchedString);
                 return true;
             }
         }
         hideKeyboardSearch();
+        updateClearSearchButton();
         hideSuggestionsPanel();
         final FragmentManager fm = activity != null ? activity.getSupportFragmentManager() : getFM();
         if (fm != null && fm.getBackStackEntryCount() > 1) {
@@ -1024,6 +1032,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         showMetaInfoInTextView(null, searchBinding.searchMetaInfoTextView,
                 searchBinding.searchMetaInfoSeparator, disposables);
         hideKeyboardSearch();
+        updateClearSearchButton();
 
         // store search query if search history is enabled
         disposables.add(historyRecordManager.onSearched(serviceId, theSearchString)
@@ -1089,6 +1098,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
     protected void onItemSelected(final InfoItem selectedItem) {
         super.onItemSelected(selectedItem);
         hideKeyboardSearch();
+        updateClearSearchButton();
     }
 
     private void onItemError(final Throwable exception) {
@@ -1299,6 +1309,7 @@ public class SearchFragment extends BaseListFragment<SearchInfo, ListExtractor.I
         super.handleError();
         hideSuggestionsPanel();
         hideKeyboardSearch();
+        updateClearSearchButton();
     }
 
     /*//////////////////////////////////////////////////////////////////////////

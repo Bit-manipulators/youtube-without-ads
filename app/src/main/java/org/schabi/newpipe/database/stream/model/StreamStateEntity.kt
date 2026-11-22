@@ -41,8 +41,7 @@ data class StreamStateEntity(
      * @return whether this stream state entity should be saved or not
      */
     fun isValid(durationInSeconds: Long): Boolean {
-        return progressMillis > PLAYBACK_SAVE_THRESHOLD_START_MILLISECONDS ||
-            progressMillis > durationInSeconds * 1000 / 4
+        return progressMillis >= PLAYBACK_SAVE_THRESHOLD_START_MILLISECONDS
     }
 
     /**
@@ -70,9 +69,9 @@ data class StreamStateEntity(
 
         /**
          * Playback state will not be saved, if playback time is less than this threshold
-         * (5000ms = 5s).
+         * (0ms).
          */
-        const val PLAYBACK_SAVE_THRESHOLD_START_MILLISECONDS = 5000L
+        const val PLAYBACK_SAVE_THRESHOLD_START_MILLISECONDS = 0L
 
         /**
          * Stream will be considered finished if the playback time left exceeds this threshold

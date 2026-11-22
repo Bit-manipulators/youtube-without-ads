@@ -71,10 +71,19 @@ public class LocalPlaylistStreamItemHolder extends LocalItemHolder {
 
             if (DependentPreferenceHelper.getPositionsInListsEnabled(itemProgressView.getContext())
                     && item.getProgressMillis() > 0) {
+                final long durationSec = item.getStreamEntity().getDuration();
+                final long progressMillis = item.getProgressMillis();
+                final long progressSec = TimeUnit.MILLISECONDS.toSeconds(progressMillis);
+                itemProgressView.setMax((int) durationSec);
+
+                if (progressMillis >= durationSec * 950) {
+                    itemProgressView.setProgress((int) durationSec);
+                } else {
+                    final long minVisibleSec = Math.max(1, (long) Math.ceil(durationSec * 0.025));
+                    final long displaySec = Math.min(durationSec, Math.max(progressSec, minVisibleSec));
+                    itemProgressView.setProgress((int) displaySec);
+                }
                 itemProgressView.setVisibility(View.VISIBLE);
-                itemProgressView.setMax((int) item.getStreamEntity().getDuration());
-                itemProgressView.setProgress((int) TimeUnit.MILLISECONDS
-                        .toSeconds(item.getProgressMillis()));
             } else {
                 itemProgressView.setVisibility(View.GONE);
             }
@@ -113,13 +122,23 @@ public class LocalPlaylistStreamItemHolder extends LocalItemHolder {
 
         if (DependentPreferenceHelper.getPositionsInListsEnabled(itemProgressView.getContext())
                 && item.getProgressMillis() > 0 && item.getStreamEntity().getDuration() > 0) {
-            itemProgressView.setMax((int) item.getStreamEntity().getDuration());
-            if (itemProgressView.getVisibility() == View.VISIBLE) {
-                itemProgressView.setProgressAnimated((int) TimeUnit.MILLISECONDS
-                        .toSeconds(item.getProgressMillis()));
+            final long durationSec = item.getStreamEntity().getDuration();
+            final long progressMillis = item.getProgressMillis();
+            final long progressSec = TimeUnit.MILLISECONDS.toSeconds(progressMillis);
+            itemProgressView.setMax((int) durationSec);
+
+            final long finalProgress;
+            if (progressMillis >= durationSec * 950) {
+                finalProgress = durationSec;
             } else {
-                itemProgressView.setProgress((int) TimeUnit.MILLISECONDS
-                        .toSeconds(item.getProgressMillis()));
+                final long minVisibleSec = Math.max(1, (long) Math.ceil(durationSec * 0.025));
+                finalProgress = Math.min(durationSec, Math.max(progressSec, minVisibleSec));
+            }
+
+            if (itemProgressView.getVisibility() == View.VISIBLE) {
+                itemProgressView.setProgressAnimated((int) finalProgress);
+            } else {
+                itemProgressView.setProgress((int) finalProgress);
                 ViewUtils.animate(itemProgressView, true, 500);
             }
         } else if (itemProgressView.getVisibility() == View.VISIBLE) {

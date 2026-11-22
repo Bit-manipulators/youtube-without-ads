@@ -39,7 +39,7 @@
         android:nextFocusDown="@+id/suggestions_list"
         android:theme="@style/ToolbarSearchInputTheme" />
 
-    <ImageButton
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/toolbar_search_clear"
         android:layout_width="38dp"
         android:layout_height="38dp"
@@ -49,6 +49,7 @@
         android:scaleType="center"
         android:src="@drawable/ic_close"
         android:visibility="gone"
+        android:tint="?attr/toolbarSearchColor"
         app:tint="?attr/toolbarSearchColor"
         tools:visibility="visible" />
 

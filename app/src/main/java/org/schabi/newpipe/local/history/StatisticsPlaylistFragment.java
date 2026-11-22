@@ -142,10 +142,16 @@ public class StatisticsPlaylistFragment
             @Override
             public void selected(final LocalItem selectedItem) {
                 if (selectedItem instanceof StreamStatisticsEntry) {
-                    final StreamEntity item =
-                            ((StreamStatisticsEntry) selectedItem).getStreamEntity();
+                    final StreamStatisticsEntry entry = (StreamStatisticsEntry) selectedItem;
+                    final StreamEntity item = entry.getStreamEntity();
+                    final PlayQueue queue = new SinglePlayQueue(entry.toStreamInfoItem());
+                    final long durationMillis = item.getDuration() * 1000L;
+                    if (entry.getProgressMillis() > 0
+                            && (durationMillis <= 0 || entry.getProgressMillis() < durationMillis - 3000L)) {
+                        queue.setRecovery(0, entry.getProgressMillis());
+                    }
                     NavigationHelper.openVideoDetailFragment(requireContext(), getFM(),
-                            item.getServiceId(), item.getUrl(), item.getTitle(), null, false);
+                            item.getServiceId(), item.getUrl(), item.getTitle(), queue, false);
                 }
             }
 
@@ -381,7 +387,19 @@ public class StatisticsPlaylistFragment
                 streamInfoItems.add(((StreamStatisticsEntry) item).toStreamInfoItem());
             }
         }
-        return new SinglePlayQueue(streamInfoItems, index);
+        final PlayQueue queue = new SinglePlayQueue(streamInfoItems, index);
+        if (index >= 0 && index < infoItems.size()) {
+            final LocalItem target = infoItems.get(index);
+            if (target instanceof StreamStatisticsEntry) {
+                final StreamStatisticsEntry targetEntry = (StreamStatisticsEntry) target;
+                final long durationMillis = targetEntry.getStreamEntity().getDuration() * 1000L;
+                if (targetEntry.getProgressMillis() > 0
+                        && (durationMillis <= 0 || targetEntry.getProgressMillis() < durationMillis - 3000L)) {
+                    queue.setRecovery(index, targetEntry.getProgressMillis());
+                }
+            }
+        }
+        return queue;
     }
 
     private void displaySortMode(final StatisticSortMode mode) {

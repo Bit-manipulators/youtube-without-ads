@@ -79,10 +79,18 @@ data class StreamItem(
             viewBinding.itemDurationView.setBackgroundResource(R.drawable.bg_duration_badge)
             viewBinding.itemDurationView.visibility = View.VISIBLE
 
-            if (stateProgressTime != null) {
+            if (stateProgressTime != null && stateProgressTime > 0) {
+                val durationSec = stream.duration
+                val progressSec = TimeUnit.MILLISECONDS.toSeconds(stateProgressTime)
+                viewBinding.itemProgressView.max = durationSec.toInt()
+                if (stateProgressTime >= durationSec * 950) {
+                    viewBinding.itemProgressView.progress = durationSec.toInt()
+                } else {
+                    val minVisibleSec = Math.max(1L, Math.ceil(durationSec * 0.025).toLong())
+                    val displaySec = Math.min(durationSec, Math.max(progressSec, minVisibleSec))
+                    viewBinding.itemProgressView.progress = displaySec.toInt()
+                }
                 viewBinding.itemProgressView.visibility = View.VISIBLE
-                viewBinding.itemProgressView.max = stream.duration.toInt()
-                viewBinding.itemProgressView.progress = TimeUnit.MILLISECONDS.toSeconds(stateProgressTime).toInt()
             } else {
                 viewBinding.itemProgressView.visibility = View.GONE
             }

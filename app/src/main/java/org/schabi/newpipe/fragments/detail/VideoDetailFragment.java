@@ -877,10 +877,13 @@ public final class VideoDetailFragment
                                    @Nullable final String newUrl,
                                    @NonNull final String newTitle,
                                    @Nullable final PlayQueue newQueue) {
-        if (isPlayerAvailable() && newQueue != null && playQueue != null
-                && playQueue.getItem() != null && !playQueue.getItem().getUrl().equals(newUrl)) {
-            // Preloading can be disabled since playback is surely being replaced.
-            player.disablePreloadingOfCurrentTrack();
+        if (isPlayerAvailable()) {
+            player.saveStreamProgressState();
+            if (newQueue != null && playQueue != null
+                    && playQueue.getItem() != null && !playQueue.getItem().getUrl().equals(newUrl)) {
+                // Preloading can be disabled since playback is surely being replaced.
+                player.disablePreloadingOfCurrentTrack();
+            }
         }
 
         setInitialData(newServiceId, newUrl, newTitle, newQueue);
@@ -963,10 +966,17 @@ public final class VideoDetailFragment
                     } else {
                         handleResult(result);
                         showContent();
+                        final long recoveryPos = (playQueue != null && playQueue.getItem() != null)
+                                ? playQueue.getItem().getRecoveryPosition()
+                                : PlayQueueItem.RECOVERY_UNSET;
+                        final long durationMillis = result.getDuration() * 1000L;
+                        if (recoveryPos != PlayQueueItem.RECOVERY_UNSET
+                                && (durationMillis <= 0 || recoveryPos < durationMillis - 3000L)) {
+                            playQueue = new SinglePlayQueue(result, recoveryPos);
+                        } else if (playQueue == null || playQueue.isEmpty()) {
+                            playQueue = new SinglePlayQueue(result);
+                        }
                         if (addToBackStack) {
-                            if (playQueue == null) {
-                                playQueue = new SinglePlayQueue(result);
-                            }
                             if (stack.isEmpty() || !stack.peek().getPlayQueue()
                                     .equalStreams(playQueue)) {
                                 stack.push(new StackItem(serviceId, url, title, playQueue));

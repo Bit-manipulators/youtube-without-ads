@@ -136,6 +136,9 @@ class HistoryRecordManager(context: Context) {
                     // just viewed for the first time: set 1 view
                     streamHistoryTable.insert(StreamHistoryEntity(streamId, currentTime, 1))
                 }
+
+                // Ensure an initial stream state exists so watch progress is tracked for clicked videos
+                streamStateTable.silentInsertInternal(StreamStateEntity(streamId, 1000L))
             }
         }
     }
@@ -220,11 +223,16 @@ class HistoryRecordManager(context: Context) {
     // ///////////////////////////////////////////////////////
 
     fun loadStreamState(queueItem: PlayQueueItem): Maybe<StreamStateEntity> {
-        return queueItem.stream
-            .map { info -> streamTable.upsert(StreamEntity(info)) }
-            .flatMapPublisher { streamId -> streamStateTable.getState(streamId) }
-            .firstElement()
-            .flatMap { list -> if (list.isEmpty()) Maybe.empty() else Maybe.just(list[0]) }
+        return Maybe.fromCallable {
+            streamTable.getStream(queueItem.serviceId.toLong(), queueItem.url)
+                .blockingFirst()
+                .firstOrNull()
+                ?.let { entity ->
+                    streamStateTable.getState(entity.uid)
+                        .blockingFirst()
+                        .firstOrNull()
+                }
+        }
             .filter { state -> state.isValid(queueItem.duration) }
             .subscribeOn(Schedulers.io())
     }

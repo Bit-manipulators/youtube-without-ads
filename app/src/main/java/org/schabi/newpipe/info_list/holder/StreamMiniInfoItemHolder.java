@@ -66,11 +66,20 @@ public class StreamMiniInfoItemHolder extends InfoItemHolder {
                 state2 = historyRecordManager.loadStreamState(infoItem)
                         .blockingGet();
             }
-            if (state2 != null) {
+            if (state2 != null && state2.getProgressMillis() > 0) {
+                final long durationSec = item.getDuration();
+                final long progressMillis = state2.getProgressMillis();
+                final long progressSec = TimeUnit.MILLISECONDS.toSeconds(progressMillis);
+                itemProgressView.setMax((int) durationSec);
+
+                if (state2.isFinished(durationSec) || progressMillis >= durationSec * 950) {
+                    itemProgressView.setProgress((int) durationSec);
+                } else {
+                    final long minVisibleSec = Math.max(1, (long) Math.ceil(durationSec * 0.025));
+                    final long displaySec = Math.min(durationSec, Math.max(progressSec, minVisibleSec));
+                    itemProgressView.setProgress((int) displaySec);
+                }
                 itemProgressView.setVisibility(View.VISIBLE);
-                itemProgressView.setMax((int) item.getDuration());
-                itemProgressView.setProgress((int) TimeUnit.MILLISECONDS
-                        .toSeconds(state2.getProgressMillis()));
             } else {
                 itemProgressView.setVisibility(View.GONE);
             }
@@ -121,14 +130,25 @@ public class StreamMiniInfoItemHolder extends InfoItemHolder {
                     .blockingGet();
         }
         if (state != null && item.getDuration() > 0
-                && !StreamTypeUtil.isLiveStream(item.getStreamType())) {
-            itemProgressView.setMax((int) item.getDuration());
-            if (itemProgressView.getVisibility() == View.VISIBLE) {
-                itemProgressView.setProgressAnimated((int) TimeUnit.MILLISECONDS
-                        .toSeconds(state.getProgressMillis()));
+                && !StreamTypeUtil.isLiveStream(item.getStreamType())
+                && state.getProgressMillis() > 0) {
+            final long durationSec = item.getDuration();
+            final long progressMillis = state.getProgressMillis();
+            final long progressSec = TimeUnit.MILLISECONDS.toSeconds(progressMillis);
+            itemProgressView.setMax((int) durationSec);
+
+            final long finalProgress;
+            if (state.isFinished(durationSec) || progressMillis >= durationSec * 950) {
+                finalProgress = durationSec;
             } else {
-                itemProgressView.setProgress((int) TimeUnit.MILLISECONDS
-                        .toSeconds(state.getProgressMillis()));
+                final long minVisibleSec = Math.max(1, (long) Math.ceil(durationSec * 0.025));
+                finalProgress = Math.min(durationSec, Math.max(progressSec, minVisibleSec));
+            }
+
+            if (itemProgressView.getVisibility() == View.VISIBLE) {
+                itemProgressView.setProgressAnimated((int) finalProgress);
+            } else {
+                itemProgressView.setProgress((int) finalProgress);
                 ViewUtils.animate(itemProgressView, true, 500);
             }
         } else if (itemProgressView.getVisibility() == View.VISIBLE) {

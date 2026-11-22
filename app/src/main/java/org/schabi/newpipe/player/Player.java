@@ -757,6 +757,7 @@ public final class Player implements PlaybackListener, Listener {
     }
 
     public void smoothStopForImmediateReusing() {
+        saveStreamProgressState();
         // Pausing would make transition from one stream to a new stream not smooth, so only stop
         simpleExoPlayer.stop();
         setRecovery();
@@ -1034,12 +1035,19 @@ public final class Player implements PlaybackListener, Listener {
                 (int) simpleExoPlayer.getDuration(), simpleExoPlayer.getBufferedPercentage());
     }
 
+    private int periodicSaveCounter = 0;
+
     private Disposable getProgressUpdateDisposable() {
         return Observable.interval(PROGRESS_LOOP_INTERVAL_MILLIS, MILLISECONDS,
                         AndroidSchedulers.mainThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(ignored -> triggerProgressUpdate(),
-                        error -> Log.e(TAG, "Progress update failure: ", error));
+                .subscribe(ignored -> {
+                    triggerProgressUpdate();
+                    if (++periodicSaveCounter % 2 == 0) {
+                        saveStreamProgressState();
+                    }
+                },
+                error -> Log.e(TAG, "Progress update failure: ", error));
     }
 
     //endregion
@@ -1205,6 +1213,7 @@ public final class Player implements PlaybackListener, Listener {
         if (!isProgressLoopRunning()) {
             startProgressLoop();
         }
+        saveStreamProgressState();
 
         UIs.call(PlayerUi::onPlaying);
     }
